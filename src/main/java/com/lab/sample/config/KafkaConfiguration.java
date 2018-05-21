@@ -1,43 +1,48 @@
 package com.lab.sample.config;
 
-import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
+import org.springframework.integration.handler.LoggingHandler.Level;
 import org.springframework.integration.kafka.dsl.Kafka;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 
 @Configuration
-@EnableConfigurationProperties(KafkaAppProperties.class)
-public class KafkaConfig {
+@EnableConfigurationProperties(KafkaConfigurationProperties.class)
+public class KafkaConfiguration {
 
 	@Autowired
-	private KafkaAppProperties properties;
+	private KafkaConfigurationProperties kafkaProperties;
 
 	@Bean
-	public IntegrationFlow toKafka(KafkaTemplate<?, ?> kafkaTemplate) {
-		return f -> f.handle(Kafka.outboundChannelAdapter(kafkaTemplate).messageKey(this.properties.getMessageKey()));
+	IntegrationFlow toKafka(KafkaTemplate<?, ?> kafkaTemplate) {
+		return f -> f
+			.log(Level.INFO, "Sending message to Kafka")
+			.handle(Kafka.outboundChannelAdapter(kafkaTemplate)
+				.messageKey(this.kafkaProperties.getMessageKey()));
 	}
 
 	@Bean
-	public IntegrationFlow fromKafkaFlow(ConsumerFactory<?, ?> consumerFactory) {
-		return IntegrationFlows.from(Kafka.messageDrivenChannelAdapter(consumerFactory, this.properties.getTopic()))
-				.channel(c -> c.queue("fromKafka")).get();
+	IntegrationFlow fromKafkaFlow(ConsumerFactory<?, ?> consumerFactory) {
+		return IntegrationFlows
+			.from(Kafka.messageDrivenChannelAdapter(consumerFactory, this.kafkaProperties.getTopic()))
+			.log(Level.INFO, "Received message from Kafka")
+			.channel(c -> c.queue("fromKafka")).get();
 	}
 
-	@Bean
-	public NewTopic topic(KafkaAppProperties properties) {
-		return new NewTopic(properties.getTopic(), 1, (short) 1);
-	}
-
-	@Bean
-	public NewTopic newTopic(KafkaAppProperties properties) {
-		return new NewTopic(properties.getNewTopic(), 1, (short) 1);
-	}
+	// @Bean
+	// public NewTopic topic(KafkaConfigurationProperties properties) {
+	// return new NewTopic(properties.getTopic(), 1, (short) 1);
+	// }
+	//
+	// @Bean
+	// public NewTopic newTopic(KafkaConfigurationProperties properties) {
+	// return new NewTopic(properties.getNewTopic(), 1, (short) 1);
+	// }
 
 	// @Autowired
 	// private IntegrationFlowContext flowContext;

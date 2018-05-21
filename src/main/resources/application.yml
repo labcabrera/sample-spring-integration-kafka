@@ -1,6 +1,6 @@
 kafka:
-  topic: test
-  newTopic: si.new.topic
+  topic: sample-topic-01
+  newTopic: sample-topic-02
   messageKey: si.key
 
 spring:

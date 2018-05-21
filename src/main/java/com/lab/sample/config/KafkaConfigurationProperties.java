@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 @ConfigurationProperties("kafka")
-public class KafkaAppProperties {
+public class KafkaConfigurationProperties {
 
 	private String topic;
 
