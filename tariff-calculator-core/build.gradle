@@ -1,13 +1,19 @@
 buildscript {
-	ext {
-		springBootVersion = '2.0.2.RELEASE'
-	}
-	repositories {
-		mavenCentral()
-	}
-	dependencies {
-		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-	}
+  ext {
+    springBootVersion = '2.0.2.RELEASE'
+    springIntegrationKafkaVersion = '3.0.3.RELEASE'
+    useProxy = true
+  }
+  repositories {
+    if(useProxy) {
+      maven { url "http://nexus:8080/nexus/content/groups/public/" }
+    } else {    
+      mavenCentral()
+    }
+  }
+  dependencies {
+    classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+  }
 }
 
 apply plugin: 'java'
@@ -20,12 +26,18 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.8
 
 repositories {
-	mavenCentral()
+  if(useProxy) {
+    maven { url "http://nexus:8080/nexus/content/groups/public/" }
+  } else {    
+    mavenCentral()
+  }
 }
-
 
 dependencies {
-	compile('org.springframework.boot:spring-boot-starter-web')
-	compile('org.springframework.kafka:spring-kafka')
-	testCompile('org.springframework.boot:spring-boot-starter-test')
+  compile('org.springframework.boot:spring-boot-starter')
+  compile("org.springframework.integration:spring-integration-kafka:${springIntegrationKafkaVersion}")
+  //compile('org.springframework.boot:spring-boot-starter-web')
+  //compile('org.springframework.kafka:spring-kafka')
+  testCompile('org.springframework.boot:spring-boot-starter-test')
 }
+
