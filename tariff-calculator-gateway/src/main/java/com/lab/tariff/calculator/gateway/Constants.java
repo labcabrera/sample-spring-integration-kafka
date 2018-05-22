@@ -1,4 +1,4 @@
-package com.lab.sample;
+package com.lab.tariff.calculator.gateway;
 
 public interface Constants {
 

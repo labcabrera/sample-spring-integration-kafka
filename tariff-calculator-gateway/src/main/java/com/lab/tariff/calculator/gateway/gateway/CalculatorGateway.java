@@ -1,10 +1,10 @@
-package com.lab.sample.gateway;
+package com.lab.tariff.calculator.gateway.gateway;
 
 import org.springframework.integration.annotation.Gateway;
 import org.springframework.integration.annotation.MessagingGateway;
 
-import com.lab.sample.model.CalculationRequest;
-import com.lab.sample.model.CalculationResponse;
+import com.lab.tariff.calculator.gateway.model.CalculationRequest;
+import com.lab.tariff.calculator.gateway.model.CalculationResponse;
 
 @MessagingGateway
 public interface CalculatorGateway {

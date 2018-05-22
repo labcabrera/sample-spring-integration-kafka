@@ -1,4 +1,4 @@
-package com.lab.sample.model;
+package com.lab.tariff.calculator.gateway.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
