@@ -1,0 +1,43 @@
+= Ejemplo de integración con Spring Integration y Apache Kafka
+
+La aplicación contiene dos módulos que se comunican a través de una cola de Kafka. El primer módulo
+será un gateway que expondrá una API REST a través de la cual recibirá las peticiones. El segundo
+módulo contendrá la lógica de negocio escuchando los mensajes de una cola de Kafka utilizando para
+ello Spring Integration DSL.
+
+[source]
+----
+[http]        [gateway]       [kafka]      [core]        [mongo]
+  |-------------->|              |           |              |
+  |               |------------->| [1]       |              |
+  |               |              |           |              |
+  |               |              |---------->|              |
+  |               |              |           |------------->|
+  |               |              |<----------|              |
+  |               |<-------------| [2]       |              |
+  |<--------------|              |           |              |          
+----
+
+[1]: _tf-calculator-in_
+[2]: _tf-calculator-out_
+
+La información sobre cada cálculo se persistirá en mongodb, que también será utilizado para
+recuperar aquella información de negocio necesaria para realizar los cálculos.
+
+----
+docker pull spotify/kafka
+
+docker run -d -p 2181:2181 -p 9092:9092 --env ADVERTISED_HOST=localhost --env ADVERTISED_PORT=9092 --name kafka spotify/kafka
+
+docker exec kafka /opt/kafka_2.11-0.10.1.0/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic tf-calculator-in
+docker exec kafka /opt/kafka_2.11-0.10.1.0/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic tf-calculator-out
+
+curl -d '{}' -H "Content-Type: application/json" http://localhost:8080/api/v1/calculator
+----
+
+
+
+https://github.com/spring-projects/spring-integration-samples/tree/master/dsl/kafka-dsl
+
+https://github.com/labcabrera/sample-spring-kafka
+
