@@ -1,4 +1,4 @@
-package com.lab.tariff.calculator.gateway.model;
+package com.lab.tariff.calculator.model;
 
 import java.util.Date;
 

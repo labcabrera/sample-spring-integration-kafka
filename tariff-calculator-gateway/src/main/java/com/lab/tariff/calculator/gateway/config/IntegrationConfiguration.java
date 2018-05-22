@@ -11,13 +11,8 @@ import org.springframework.integration.kafka.dsl.Kafka;
 import org.springframework.integration.support.json.Jackson2JsonObjectMapper;
 import org.springframework.integration.support.json.JsonObjectMapper;
 import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.core.ProducerFactory;
-import org.springframework.kafka.listener.KafkaMessageListenerContainer;
-import org.springframework.kafka.listener.config.ContainerProperties;
-import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.MessageChannel;
-
-import com.lab.tariff.calculator.gateway.model.CalculationResponse;
 
 @Configuration
 public class IntegrationConfiguration {
@@ -34,36 +29,42 @@ public class IntegrationConfiguration {
 
 	@Bean(name = "channel-tf-calculator-out")
 	MessageChannel channelCalculatorOut() {
-		return MessageChannels.direct().get();
-	}
-
-	@Bean
-	ReplyingKafkaTemplate<String, String, String> replyKafkaTemplate(ProducerFactory<String, String> pf,
-		KafkaMessageListenerContainer<String, String> container) {
-
-		return new ReplyingKafkaTemplate<>(pf, container);
-	}
-
-	@Bean
-	KafkaMessageListenerContainer<String, String> replyContainer(ConsumerFactory<String, String> cf) {
-		ContainerProperties containerProperties = new ContainerProperties("tf-calculator-in");
-		return new KafkaMessageListenerContainer<>(cf, containerProperties);
+		return MessageChannels.publishSubscribe("channel-tf-calculator-out").get();
 	}
 
 	//@formatter:off
 	@Bean
-	IntegrationFlow creationflow(ReplyingKafkaTemplate<String, String, String> kafkaTemplate, JsonObjectMapper<?, ?> mapper) {
+	IntegrationFlow flowToKafka(KafkaTemplate<String, String> kafkaTemplate, JsonObjectMapper<?, ?> mapper) {
 		return IntegrationFlows
 			.from(MessageChannels.publishSubscribe("channel-tf-calculator-in"))
 			.transform(Transformers.toJson(mapper))
 			.log(Level.INFO, "channel -> kafka")
-			.handle(
-				Kafka.outboundGateway(kafkaTemplate)
-					.messageKey("message-key-value")
-					.topic("tf-calculator-in"))
-			.transform(Transformers.fromJson(CalculationResponse.class, mapper))
-			.channel(MessageChannels.direct("channel-tf-calculator-out"))
+			.handle(Kafka.outboundChannelAdapter(kafkaTemplate).messageKey("dummy-message-key").topic("tf-calculator-in"))
 			.get();
 	}
+	//@formatter:on
+
+	//@formatter:off
+	@Bean
+	IntegrationFlow flowFromKafka(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
+		return IntegrationFlows
+			.from(Kafka.messageDrivenChannelAdapter(consumerFactory, "tf-calculator-out"))
+			.log(Level.INFO, "kafka -> channel")
+			.channel("channel-tf-calculator-out")
+			.bridge()
+			.get();
+	}
+	//@formatter:off
+	
+	//@formatter:off
+	@Bean
+	IntegrationFlow flowFromKafkaDummy(KafkaTemplate<String, String> kafkaTemplate, ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
+		return IntegrationFlows
+			.from(Kafka.messageDrivenChannelAdapter(consumerFactory, "tf-calculator-in"))
+			.log(Level.INFO, "kafka -> channel [DEMO CORE]")
+			.handle(Kafka.outboundChannelAdapter(kafkaTemplate).messageKey("dummy-message-key").topic("tf-calculator-out"))
+			.get();
+	}
+	//@formatter:off
 
 }

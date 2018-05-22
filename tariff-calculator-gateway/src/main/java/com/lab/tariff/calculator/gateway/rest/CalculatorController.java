@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lab.tariff.calculator.gateway.gateway.CalculatorGateway;
-import com.lab.tariff.calculator.gateway.model.CalculationRequest;
-import com.lab.tariff.calculator.gateway.model.CalculationResponse;
+import com.lab.tariff.calculator.model.CalculationRequest;
+import com.lab.tariff.calculator.model.CalculationResponse;
 
 import lombok.extern.slf4j.Slf4j;
 
