@@ -17,7 +17,6 @@ import org.springframework.kafka.listener.config.ContainerProperties;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.messaging.MessageChannel;
 
-import com.lab.tariff.calculator.gateway.Constants.Channels;
 import com.lab.tariff.calculator.gateway.model.CalculationResponse;
 
 @Configuration
@@ -57,7 +56,7 @@ public class IntegrationConfiguration {
 		return IntegrationFlows
 			.from(MessageChannels.publishSubscribe("channel-tf-calculator-in"))
 			.transform(Transformers.toJson(mapper))
-			.log(Level.INFO, "Received message from calculator input channel")
+			.log(Level.INFO, "channel -> kafka")
 			.handle(
 				Kafka.outboundGateway(kafkaTemplate)
 					.messageKey("message-key-value")

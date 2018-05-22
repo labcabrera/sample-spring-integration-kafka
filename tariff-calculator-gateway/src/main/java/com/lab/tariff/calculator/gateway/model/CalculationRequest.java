@@ -11,4 +11,6 @@ public class CalculationRequest {
 
 	private CustomerRequestInfo customer;
 
+	private String source;
+
 }
