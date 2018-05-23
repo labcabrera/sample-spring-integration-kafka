@@ -2,7 +2,7 @@ buildscript {
   ext {
     springBootVersion = '2.0.2.RELEASE'
     springIntegrationKafkaVersion = '3.0.3.RELEASE'
-    useProxy = true
+    useProxy = false
   }
   repositories {
     if(useProxy) {
