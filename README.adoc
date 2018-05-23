@@ -7,7 +7,7 @@ ello Spring Integration DSL.
 
 [source]
 ----
-[http]        [gateway]       [kafka]      [core]        [mongo]
+[http]       [app-gateway]    [kafka]    [app-core]      [mongo]
   |-------------->|              |           |              |
   |               |------------->| [1]       |              |
   |               |              |           |              |
@@ -24,6 +24,101 @@ ello Spring Integration DSL.
 La información sobre cada cálculo se persistirá en mongodb, que también será utilizado para
 recuperar aquella información de negocio necesaria para realizar los cálculos.
 
+== Gateway app
+
+Este proyecto está construído con _maven_. Básicamente consta de un `@MessagingGateway` a partir del cual realizaremos
+las llamadas a partir del controlador `CalculatorController`:
+
+[source,java]
+----
+@RestController
+@Slf4j
+public class CalculatorController {
+
+    @Autowired
+    private CalculatorGateway gateway;
+
+    @PostMapping(Constants.Rest.CalculationRequestPath)
+    public CalculationResponse calculate(@RequestBody CalculationRequest request) { ... }
+}
+----
+
+Nuestro gateway se integra con los dos canales de entrada y salida que hemos definido en la clase `IntegrationConfiguration`.
+
+En primer lugar nuestro canal de entrada enviará los mensajes que recibe a Kafka:
+
+[source,java]
+----
+@Bean
+IntegrationFlow inputChannelToKafkaFlow(
+    KafkaTemplate<String, String> kafkaTemplate,
+    JsonObjectMapper<?, ?> mapper) {
+
+  return IntegrationFlows
+    .from(MessageChannels.publishSubscribe(Channels.CalculationIn))
+    .transform(Transformers.toJson(mapper))
+    .log(Level.INFO, "channel -> kafka")
+    .handle(Kafka
+      .outboundChannelAdapter(kafkaTemplate)
+      .messageKey(MessageKeys.CalculationMessageKey)
+      .topic(Topics.CalculationIn))
+    .get();
+}
+----
+
+Y para recibir las respuestas escucha de Kafka enviando los mensajes al canal que escucha nuestro Gateway:
+
+[source,java]
+----
+@Bean
+IntegrationFlow kafkaToOutputChannelFlow(
+    ConsumerFactory<String, String> consumerFactory,
+    JsonObjectMapper<?, ?> mapper) {
+
+  return IntegrationFlows
+    .from(Kafka
+      .messageDrivenChannelAdapter(
+        consumerFactory,
+        KafkaMessageDrivenChannelAdapter.ListenerMode.record, Topics.CalculationOut)
+      .recoveryCallback(
+        new ErrorMessageSendingRecoverer(channelCalculatorError(),
+        new RawRecordHeaderErrorMessageStrategy())))
+    .log(Level.INFO, "kafka -> channel")
+    .transform(Transformers.fromJson(CalculationResponse.class, mapper))
+    .channel(Channels.CalculationOut)
+    .get();
+}
+----
+
+== Core app
+
+Este proyecto está construído con _grade_ en lugar de _maven_. Básicamente escucha un _topic_ de Kafka y cuando recibe
+los mensajes invoca la lógica de negocio y escribe los resultados en otro _topic_.
+
+Esto lo hacemos a través de la siguiente configuración:
+
+[source,java]
+----
+IntegrationFlow flowFromKafkaDummy(
+    KafkaTemplate<String, String> kafkaTemplate,
+    ConsumerFactory<String, String> consumerFactory,
+    JsonObjectMapper<?, ?> mapper) {
+
+  return IntegrationFlows
+    .from(
+      Kafka.messageDrivenChannelAdapter(consumerFactory, Topics.CalculationIn))
+    .log(Level.INFO, "processing kafka message")
+    .transform(Transformers.fromJson(mapper))
+    .handle(CalculationRequest.class, (request, headers) -> coreCalculator.calculate(request))
+    .transform(Transformers.toJson(mapper))
+    .handle(
+      Kafka.outboundChannelAdapter(kafkaTemplate)
+      .messageKey(MessageKeys.CalculationMessageKey)
+      .topic(Topics.CalculationOut))
+    .get();
+}
+----
+
 == Infraestructura en local
 
 Para este ejemplo utilizaremos una versión dockerizada de Kafka basada en https://hub.docker.com/r/wurstmeister/kafka/.
@@ -36,12 +131,16 @@ network inspect bridge_):
 ----
 version: '2'
 services:
+
   zookeeper:
     image: wurstmeister/zookeeper
+    container_name: "tf-zookeeper"
     ports:
       - "2181:2181"
+
   kafka:
     image: wurstmeister/kafka
+    container_name: "tf-kafka"
     ports:
       - "9092"
     environment:
@@ -50,6 +149,19 @@ services:
       KAFKA_CREATE_TOPICS: "tf-calculator-in:1:3,tf-calculator-out:1:1:compact"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+
+  mongodb:
+    image: mongo:latest
+    container_name: "tf-mongodb"
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    #volumes:
+    #  - ./data/db:/data/db
+    ports:
+      - 27017:27017
+    command: mongod --smallfiles --logpath=/dev/null # --quiet
+
 ---- 
 
 Una vez actualizada levantaremos los contenedores a través del comando:
@@ -73,12 +185,7 @@ d3fb1a8b67b9        kafka_default          bridge              local
 lab@lab:~/repositories/labcabrera/sample-spring-integration-kafka$ docker network inspect kafka-docker_default
 [
     {
-        "Name": "kafka-docker_default",
-        "Id": "32a933232d331a87468a3447e9dd477b1ecfa5c511b64597700dcc2d7dffa764",
-        "Created": "2018-05-22T16:13:39.118983584+01:00",
-        "Scope": "local",
-        "Driver": "bridge",
-        "EnableIPv6": false,
+        ...
         "IPAM": {
             "Driver": "default",
             "Options": null,
@@ -89,13 +196,7 @@ lab@lab:~/repositories/labcabrera/sample-spring-integration-kafka$ docker networ
                 }
             ]
         },
-        "Internal": false,
-        "Attachable": false,
-        "Ingress": false,
-        "ConfigFrom": {
-            "Network": ""
-        },
-        "ConfigOnly": false,
+        ...
         "Containers": {
             "35d55eef08f7008896076bc872640cfc33c7901aaecbdc9590c4525629e135b1": {
                 "Name": "kafka-docker_kafka_1",
@@ -111,17 +212,16 @@ lab@lab:~/repositories/labcabrera/sample-spring-integration-kafka$ docker networ
                 "IPv4Address": "172.19.0.3/16",
                 "IPv6Address": ""
             }
+            ...
         },
-        "Options": {},
-        "Labels": {}
+        ...
     }
 ]
 ----
 
 En este caso el valor 172.19.0.2 será el que estableceremos en nuestro yml de configuración del proyecto gateway.
 
-
-
+////
 ----
 # metodo anterior no valido por problemas de incompatibilidad de la version de kafka con la de spring
 docker pull spotify/kafka
@@ -129,14 +229,17 @@ docker run -d -p 2181:2181 -p 9092:9092 --env ADVERTISED_HOST=localhost --env AD
 docker exec kafka /opt/kafka_2.11-0.10.1.0/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic tf-calculator-in
 docker exec kafka /opt/kafka_2.11-0.10.1.0/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic tf-calculator-out
 ----
+////
 
-== Probando el local
+== Probado el sistema localmente
 
 En local podemos hacer una petición a la API REST para que envíe el mensaje a Kafka.
 
 ----
 curl -d '{"source":"test-local"}' -H "Content-Type: application/json" http://localhost:8080/api/v1/calculator
 ----
+
+
 
 == Referencias
 
