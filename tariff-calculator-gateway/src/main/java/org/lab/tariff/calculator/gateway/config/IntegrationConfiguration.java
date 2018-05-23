@@ -1,4 +1,4 @@
-package com.lab.tariff.calculator.gateway.config;
+package org.lab.tariff.calculator.gateway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

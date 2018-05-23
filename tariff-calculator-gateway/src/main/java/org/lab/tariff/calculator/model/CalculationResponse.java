@@ -1,4 +1,4 @@
-package com.lab.tariff.calculator.model;
+package org.lab.tariff.calculator.model;
 
 import java.math.BigDecimal;
 import java.util.Date;

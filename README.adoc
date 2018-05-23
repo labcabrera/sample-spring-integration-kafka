@@ -24,12 +24,13 @@ ello Spring Integration DSL.
 La información sobre cada cálculo se persistirá en mongodb, que también será utilizado para
 recuperar aquella información de negocio necesaria para realizar los cálculos.
 
-
-== Infraestructura localhost
+== Infraestructura en local
 
 Para este ejemplo utilizaremos una versión dockerizada de Kafka basada en https://hub.docker.com/r/wurstmeister/kafka/.
 
-En primer lugar crearemos un _docker-compose.yml_ con la siguiente estructura:
+En primer lugar adaptaremos nuestro _docker-compose.yml_ (dentro del repositorio está en la carpeta _env_) actualizando
+el _KAFKA_ADVERTISED_HOST_NAME_ la IP de nuestro bridge de docker (podemos consultarla ejecutando el comando _docker
+network inspect bridge_):
 
 [source,yml]
 ----
@@ -51,8 +52,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 ---- 
 
-Donde tendremos que actualizar el _KAFKA_ADVERTISED_HOST_NAME_ por la IP de nuestro bridge de docker (podemos consultarla
-ejecutando el comando _docker network inspect bridge_).
+Una vez actualizada levantaremos los contenedores a través del comando:
+
+----
+docker-compose up -d
+----
 
 Una vez estén levantados los contenedores de zookeeper y de kafka consultaremos la IP de kafka para actualizar nuestra
 configuración:
@@ -134,6 +138,8 @@ En local podemos hacer una petición a la API REST para que envíe el mensaje a 
 curl -d '{"source":"test-local"}' -H "Content-Type: application/json" http://localhost:8080/api/v1/calculator
 ----
 
-https://github.com/spring-projects/spring-integration-samples/tree/master/dsl/kafka-dsl
-https://github.com/labcabrera/sample-spring-kafka
-https://github.com/wurstmeister/kafka-docker
+== Referencias
+
+* https://github.com/spring-projects/spring-integration-samples/tree/master/dsl/kafka-dsl
+* https://github.com/labcabrera/sample-spring-kafka
+* https://github.com/wurstmeister/kafka-docker

@@ -1,4 +1,4 @@
-package com.lab.tariff.calculator.gateway;
+package org.lab.tariff.calculator.gateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
