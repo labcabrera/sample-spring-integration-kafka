@@ -6,7 +6,8 @@ será un gateway que expondrá una API REST a través de la cual recibirá las p
 El
 https://github.com/labcabrera/sample-spring-integration-kafka/tree/master/tariff-calculator-core[segundo módulo]
 contendrá la lógica de negocio escuchando los mensajes de una cola de Kafka utilizando para
-ello Spring Integration DSL.
+ello
+https://github.com/spring-projects/spring-integration-java-dsl/wiki/spring-integration-java-dsl-reference[Spring Integration DSL].
 
 [source]
 ----
@@ -331,14 +332,17 @@ $ gradle dockerPush
 
 TODO
 
+////
 == Siguientes pasos
 
 * Integración PAAS: service discovery / distributed configuration
 * Gestión de canales de errores
 * Registro dinámico de pipelines con Spring DSL
+////
 
 == Referencias
 
+* https://kafka.apache.org/[Apache Kafka]
 * https://github.com/spring-projects/spring-integration-samples/tree/master/dsl/kafka-dsl
 * https://github.com/labcabrera/sample-spring-kafka
 * https://github.com/wurstmeister/kafka-docker
