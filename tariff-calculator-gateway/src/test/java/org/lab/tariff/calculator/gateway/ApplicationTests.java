@@ -1,4 +1,4 @@
-package com.lab.sample;
+package org.lab.tariff.calculator.gateway;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
