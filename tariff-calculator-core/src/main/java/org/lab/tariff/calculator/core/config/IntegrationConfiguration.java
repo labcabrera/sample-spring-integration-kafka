@@ -1,5 +1,7 @@
 package org.lab.tariff.calculator.core.config;
 
+import org.lab.tariff.calculator.core.Constants.MessageKeys;
+import org.lab.tariff.calculator.core.Constants.Topics;
 import org.lab.tariff.calculator.core.services.CoreCalculator;
 import org.lab.tariff.calculator.model.CalculationRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,14 +32,18 @@ public class IntegrationConfiguration {
 	@Bean
 	IntegrationFlow flowFromKafkaDummy(KafkaTemplate<String, String> kafkaTemplate, ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
 		return IntegrationFlows
-			.from(Kafka.messageDrivenChannelAdapter(consumerFactory, "tf-calculator-in"))
+			.from(
+				Kafka.messageDrivenChannelAdapter(consumerFactory, Topics.CalculationIn))
 			.log(Level.INFO, "processing kafka message")
 			.transform(Transformers.fromJson(mapper))
 			.handle(CalculationRequest.class, (request, headers) -> coreCalculator.calculate(request))
 			.transform(Transformers.toJson(mapper))
-			.handle(Kafka.outboundChannelAdapter(kafkaTemplate).messageKey("dummy-message-key").topic("tf-calculator-out"))
+			.handle(
+				Kafka.outboundChannelAdapter(kafkaTemplate)
+				.messageKey(MessageKeys.CalculationMessageKey)
+				.topic(Topics.CalculationOut))
 			.get();
 	}
-	//@formatter:off
+	//@formatter:on
 
 }

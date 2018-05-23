@@ -14,8 +14,10 @@ import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.Transformers;
 import org.springframework.integration.dsl.channel.MessageChannels;
 import org.springframework.integration.handler.LoggingHandler.Level;
+import org.springframework.integration.handler.advice.ErrorMessageSendingRecoverer;
 import org.springframework.integration.kafka.dsl.Kafka;
 import org.springframework.integration.kafka.inbound.KafkaMessageDrivenChannelAdapter;
+import org.springframework.integration.kafka.support.RawRecordHeaderErrorMessageStrategy;
 import org.springframework.integration.support.json.Jackson2JsonObjectMapper;
 import org.springframework.integration.support.json.JsonObjectMapper;
 import org.springframework.kafka.core.ConsumerFactory;
@@ -59,7 +61,7 @@ public class IntegrationConfiguration {
 
 	//@formatter:off
 	@Bean
-	IntegrationFlow flowToKafka(KafkaTemplate<String, String> kafkaTemplate, JsonObjectMapper<?, ?> mapper) {
+	IntegrationFlow inputChannelToKafkaFlow(KafkaTemplate<String, String> kafkaTemplate, JsonObjectMapper<?, ?> mapper) {
 		return IntegrationFlows
 			.from(MessageChannels.publishSubscribe(Channels.CalculationIn))
 			.transform(Transformers.toJson(mapper))
@@ -72,30 +74,13 @@ public class IntegrationConfiguration {
 	}
 	//@formatter:on
 
-	/**
-	 * <ul>
-	 * <li>Escucha en el topic de Kafka</li>
-	 * <li>Convierte a JSON.</li>
-	 * <li>Envia al canal de salida</li>
-	 * </ul>
-	 * 
-	 * @param kafkaTemplate
-	 * @param mapper
-	 * @return
-	 */
 	//@formatter:off
 	@Bean
-	IntegrationFlow flowFromKafka(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
+	IntegrationFlow kafkaToOutputChannelFlow(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
 		return IntegrationFlows
 			.from(Kafka
 				.messageDrivenChannelAdapter(consumerFactory, KafkaMessageDrivenChannelAdapter.ListenerMode.record, Topics.CalculationOut)
-				//.configureListenerContainer(
-				//	c -> c.ackMode(AbstractMessageListenerContainer.AckMode.).id("topic1ListenerContainer"))
-				//.recoveryCallback(new ErrorMessageSendingRecoverer(channelCalculatorError(),
-				//	new RawRecordHeaderErrorMessageStrategy()))
-				//.retryTemplate(new RetryTemplate())
-				//.filterInRetry(true))
-				)
+				.recoveryCallback(new ErrorMessageSendingRecoverer(channelCalculatorError(), new RawRecordHeaderErrorMessageStrategy())))
 			.log(Level.INFO, "kafka -> channel")
 			.transform(Transformers.fromJson(CalculationResponse.class, mapper))
 			.channel(Channels.CalculationOut)
@@ -103,27 +88,15 @@ public class IntegrationConfiguration {
 	}
 	//@formatter:on
 
-//	//@formatter:off
-//	@Bean
-//	IntegrationFlow flowError(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
-//		return IntegrationFlows
-//			.from(MessageChannels.publishSubscribe(Channels.CalculationErr))
-//			.log(Level.ERROR, "Error")
-//			.bridge()
-//			.get();
-//	}
-//	//@formatter:on
-	//
-
-//	//@formatter:off
-//	@Bean
-//	IntegrationFlow flow_test(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
-//		return IntegrationFlows
-//			.from(MessageChannels.publishSubscribe(Channels.CalculationOut))
-//			.log(Level.ERROR, "Dummy flow!!!")
-////			.bridge()
-//			.get();
-//	}
-//	//@formatter:on
+	//@formatter:off
+	@Bean
+	IntegrationFlow flowError(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
+		return IntegrationFlows
+			.from(MessageChannels.publishSubscribe(Channels.CalculationErr))
+			.log(Level.ERROR, "Error")
+			.bridge()
+			.get();
+	}
+	//@formatter:on
 
 }

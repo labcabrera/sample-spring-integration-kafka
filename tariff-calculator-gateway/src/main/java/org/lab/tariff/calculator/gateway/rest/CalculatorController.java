@@ -1,5 +1,6 @@
 package org.lab.tariff.calculator.gateway.rest;
 
+import org.lab.tariff.calculator.gateway.Constants;
 import org.lab.tariff.calculator.gateway.gateway.CalculatorGateway;
 import org.lab.tariff.calculator.model.CalculationRequest;
 import org.lab.tariff.calculator.model.CalculationResponse;
@@ -17,11 +18,12 @@ public class CalculatorController {
 	@Autowired
 	private CalculatorGateway gateway;
 
-	@PostMapping("/api/v1/calculator")
+	@PostMapping(Constants.Rest.CalculationRequestPath)
 	public CalculationResponse calculate(@RequestBody CalculationRequest request) {
-		log.info("Processing calculation request: {}", request);
+		log.debug("Processing calculation request: {}", request);
 		gateway.sendMessage(request);
 		CalculationResponse response = gateway.receiveMessage();
+		log.debug("Received response: {}", response);
 		return response;
 	}
 

@@ -12,9 +12,17 @@ public interface Constants {
 		String CalculationOut = "channel-tf-calculator-out";
 		String CalculationErr = "channel-tf-calculator-err";
 	}
-	
+
 	public interface MessageKeys {
 		String CalculationMessageKey = "tf-calculator-message-key";
+	}
+
+	public interface Gateways {
+		long CalculationResponseTimeout = 5000L;
+	}
+
+	public interface Rest {
+		String CalculationRequestPath = "/api/v1/calculator";
 	}
 
 }
