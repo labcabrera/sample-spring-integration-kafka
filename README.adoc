@@ -1,6 +1,6 @@
 = Spring Integration - Apache Kafka - MongoDB sample application
 
-La aplicación contiene dos módulos que se comunican a través de una cola de Kafka. El primer módulo
+La aplicación contiene dos módulos que se comunican a través de Kafka. El primer módulo
 será un gateway que expondrá una API REST a través de la cual recibirá las peticiones. El segundo
 módulo contendrá la lógica de negocio escuchando los mensajes de una cola de Kafka utilizando para
 ello Spring Integration DSL.
@@ -293,6 +293,12 @@ En local podemos hacer una petición a la API REST para que envíe el mensaje a 
 $ curl -d '{"source":"test"}' -H "Content-Type: application/json" http://localhost:8080/api/v1/calculator
 {"reference":"5b056eb7457e766f43b70d4d","amount":72.11,"calculated":"2018-05-23T13:37:59.948+0000"}
 ----
+
+También podremos hacer la petición utilizando la integración de Swagger proporcionada por http://springfox.github.io/springfox/[SpringFox]:
+
+http://localhost:8080/swagger-ui.html
+
+image::https://raw.githubusercontent.com/labcabrera/sample-spring-integration-kafka/master/docs/swagger-ui-capture.png[Swagger-UI]
 
 == Generación de las imágenes de docker
 
