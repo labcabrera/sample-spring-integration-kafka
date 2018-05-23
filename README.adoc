@@ -278,19 +278,10 @@ lab@lab:~/repositories/labcabrera/sample-spring-integration-kafka$ docker networ
 
 En este caso el valor 172.18.0.4 será el que estableceremos en nuestro _yml_ de configuración tanto del proyecto core como del gateway.
 
-////
-----
-# metodo anterior no valido por problemas de incompatibilidad de la version de kafka con la de spring
-docker pull spotify/kafka
-docker run -d -p 2181:2181 -p 9092:9092 --env ADVERTISED_HOST=localhost --env ADVERTISED_PORT=9092 --name kafka spotify/kafka
-docker exec kafka /opt/kafka_2.11-0.10.1.0/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic tf-calculator-in
-docker exec kafka /opt/kafka_2.11-0.10.1.0/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic tf-calculator-out
-----
-////
+== Probando el sistema localmente
 
-== Probado el sistema localmente
-
-En local podemos hacer una petición a la API REST para que envíe el mensaje a Kafka.
+Una vez hemos arrancado los contenedores de Kafka y MongoDB, simplemente tendremos que arrancar tanto el core como el gateway y podemos
+comprobar el funcionamiento de la aplicación a través de la API REST:
 
 ----
 $ curl -d '{"source":"test"}' -H "Content-Type: application/json" http://localhost:8080/api/v1/calculator
