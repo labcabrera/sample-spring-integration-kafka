@@ -1,4 +1,4 @@
-= Ejemplo de integración con Spring Integration y Apache Kafka
+= Spring Integration - Apache Kafka - MongoDB sample application
 
 La aplicación contiene dos módulos que se comunican a través de una cola de Kafka. El primer módulo
 será un gateway que expondrá una API REST a través de la cual recibirá las peticiones. El segundo
