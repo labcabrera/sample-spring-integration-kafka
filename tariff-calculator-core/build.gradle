@@ -36,12 +36,9 @@ repositories {
 dependencies {
   compile('org.springframework.boot:spring-boot-starter')
   compile("org.springframework.integration:spring-integration-kafka:${springIntegrationKafkaVersion}")
+  compile('org.springframework.boot:spring-boot-starter-data-mongodb')
   compile('org.projectlombok:lombok')
-  //compile('org.springframework.boot:spring-boot-starter-web')
-  //compile('org.springframework.kafka:spring-kafka')
-  
-  compile('com.fasterxml.jackson.core:jackson-databind') //, version: '2.9.5'
-  
+  compile('com.fasterxml.jackson.core:jackson-databind')  
   testCompile('org.springframework.boot:spring-boot-starter-test')
 }
 

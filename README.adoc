@@ -12,7 +12,7 @@ ello Spring Integration DSL.
   |               |------------->| [1]       |              |
   |               |              |           |              |
   |               |              |---------->|              |
-  |               |              |           |------------->|
+  |               |              |           |<------------>|
   |               |              |<----------|              |
   |               |<-------------| [2]       |              |
   |<--------------|              |           |              |          
@@ -254,10 +254,15 @@ docker exec kafka /opt/kafka_2.11-0.10.1.0/bin/kafka-topics.sh --create --zookee
 En local podemos hacer una petición a la API REST para que envíe el mensaje a Kafka.
 
 ----
-curl -d '{"source":"test-local"}' -H "Content-Type: application/json" http://localhost:8080/api/v1/calculator
+curl -d '{"source":"test"}' -H "Content-Type: application/json" http://localhost:8080/api/v1/calculator
 ----
 
+== Siguientes pasos
 
+* Integración PAAS: service discovery / distributed configuration
+* Dockerización de los 2 microservicios (plugins de maven y gradle)
+* Gestión de canales de errores
+* Registro dinámico de pipelines con Spring DSL
 
 == Referencias
 

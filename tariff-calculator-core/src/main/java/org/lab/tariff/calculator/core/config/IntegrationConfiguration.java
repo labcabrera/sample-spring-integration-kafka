@@ -7,6 +7,7 @@ import org.lab.tariff.calculator.model.CalculationRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.Transformers;
@@ -18,6 +19,7 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 
 @Configuration
+@EnableIntegration
 public class IntegrationConfiguration {
 
 	@Autowired
@@ -30,7 +32,11 @@ public class IntegrationConfiguration {
 
 	//@formatter:off
 	@Bean
-	IntegrationFlow flowFromKafkaDummy(KafkaTemplate<String, String> kafkaTemplate, ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
+	IntegrationFlow flowFromKafkaDummy(
+			KafkaTemplate<String, String> kafkaTemplate,
+			ConsumerFactory<String, String> consumerFactory,
+			JsonObjectMapper<?, ?> mapper) {
+
 		return IntegrationFlows
 			.from(
 				Kafka.messageDrivenChannelAdapter(consumerFactory, Topics.CalculationIn))
@@ -40,8 +46,8 @@ public class IntegrationConfiguration {
 			.transform(Transformers.toJson(mapper))
 			.handle(
 				Kafka.outboundChannelAdapter(kafkaTemplate)
-				.messageKey(MessageKeys.CalculationMessageKey)
-				.topic(Topics.CalculationOut))
+					.messageKey(MessageKeys.CalculationMessageKey)
+					.topic(Topics.CalculationOut))
 			.get();
 	}
 	//@formatter:on
