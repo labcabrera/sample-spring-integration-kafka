@@ -143,3 +143,4 @@ curl -d '{"source":"test-local"}' -H "Content-Type: application/json" http://loc
 * https://github.com/spring-projects/spring-integration-samples/tree/master/dsl/kafka-dsl
 * https://github.com/labcabrera/sample-spring-kafka
 * https://github.com/wurstmeister/kafka-docker
+* https://github.com/spring-projects/spring-integration-java-dsl/blob/master/src/test/java/org/springframework/integration/dsl/test/kafka/KafkaTests.java

@@ -4,8 +4,11 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.lab.tariff.calculator.gateway.Constants.Channels;
 import org.lab.tariff.calculator.gateway.Constants.MessageKeys;
 import org.lab.tariff.calculator.gateway.Constants.Topics;
+import org.lab.tariff.calculator.model.CalculationResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.integration.channel.QueueChannel;
+import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.Transformers;
@@ -18,8 +21,10 @@ import org.springframework.integration.support.json.JsonObjectMapper;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.PollableChannel;
 
 @Configuration
+@EnableIntegration
 public class IntegrationConfiguration {
 
 	@Bean
@@ -43,8 +48,8 @@ public class IntegrationConfiguration {
 	}
 
 	@Bean(name = Channels.CalculationOut)
-	MessageChannel channelCalculatorOut() {
-		return MessageChannels.direct().get();
+	public PollableChannel channelCalculatorOut() {
+		return new QueueChannel();
 	}
 
 	@Bean(name = Channels.CalculationErr)
@@ -52,17 +57,6 @@ public class IntegrationConfiguration {
 		return MessageChannels.direct().get();
 	}
 
-	/**
-	 * <ul>
-	 * <li>Recibe los mensajes del channel de entrada</li>
-	 * <li>Convierte a JSON.</li>
-	 * <li>Envia al topic de Kafka</li>
-	 * </ul>
-	 * 
-	 * @param kafkaTemplate
-	 * @param mapper
-	 * @return
-	 */
 	//@formatter:off
 	@Bean
 	IntegrationFlow flowToKafka(KafkaTemplate<String, String> kafkaTemplate, JsonObjectMapper<?, ?> mapper) {
@@ -94,7 +88,7 @@ public class IntegrationConfiguration {
 	IntegrationFlow flowFromKafka(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
 		return IntegrationFlows
 			.from(Kafka
-				.messageDrivenChannelAdapter(consumerFactory, KafkaMessageDrivenChannelAdapter.ListenerMode.record, "tf-calculator-out")
+				.messageDrivenChannelAdapter(consumerFactory, KafkaMessageDrivenChannelAdapter.ListenerMode.record, Topics.CalculationOut)
 				//.configureListenerContainer(
 				//	c -> c.ackMode(AbstractMessageListenerContainer.AckMode.).id("topic1ListenerContainer"))
 				//.recoveryCallback(new ErrorMessageSendingRecoverer(channelCalculatorError(),
@@ -103,32 +97,33 @@ public class IntegrationConfiguration {
 				//.filterInRetry(true))
 				)
 			.log(Level.INFO, "kafka -> channel")
-			//.transform(Transformers.fromJson(CalculationRequest.class, mapper))
+			.transform(Transformers.fromJson(CalculationResponse.class, mapper))
 			.channel(Channels.CalculationOut)
 			.get();
 	}
 	//@formatter:on
 
-	//@formatter:off
-	@Bean
-	IntegrationFlow flowError(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
-		return IntegrationFlows
-			.from(MessageChannels.publishSubscribe(Channels.CalculationErr))
-			.log(Level.ERROR, "Error")
-			.bridge()
-			.get();
-	}
-	//@formatter:on
-	
-	//@formatter:off
-	@Bean
-	IntegrationFlow flow_test(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
-		return IntegrationFlows
-			.from(MessageChannels.publishSubscribe(Channels.CalculationOut))
-			.log(Level.ERROR, "Error")
-			.bridge()
-			.get();
-	}
-	//@formatter:on
+//	//@formatter:off
+//	@Bean
+//	IntegrationFlow flowError(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
+//		return IntegrationFlows
+//			.from(MessageChannels.publishSubscribe(Channels.CalculationErr))
+//			.log(Level.ERROR, "Error")
+//			.bridge()
+//			.get();
+//	}
+//	//@formatter:on
+	//
+
+//	//@formatter:off
+//	@Bean
+//	IntegrationFlow flow_test(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
+//		return IntegrationFlows
+//			.from(MessageChannels.publishSubscribe(Channels.CalculationOut))
+//			.log(Level.ERROR, "Dummy flow!!!")
+////			.bridge()
+//			.get();
+//	}
+//	//@formatter:on
 
 }

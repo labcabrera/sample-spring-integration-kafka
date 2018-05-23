@@ -20,7 +20,8 @@ public class CalculatorController {
 	@PostMapping("/api/v1/calculator")
 	public CalculationResponse calculate(@RequestBody CalculationRequest request) {
 		log.info("Processing calculation request: {}", request);
-		CalculationResponse response = gateway.processCreation(request);
+		gateway.sendMessage(request);
+		CalculationResponse response = gateway.receiveMessage();
 		return response;
 	}
 
