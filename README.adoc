@@ -158,7 +158,9 @@ Adicionalmente almacenará en mongo una referencia al cálculo solicitado:
 
 == Infraestructura en local
 
-Para este ejemplo utilizaremos una versión dockerizada de Kafka basada en https://hub.docker.com/r/wurstmeister/kafka/.
+Para este ejemplo utilizaremos la siguiente versión dockerizada de Kafka https://hub.docker.com/r/wurstmeister/kafka/[wurstmeister/kafka]. Esta
+está basada en una versión _1.1.0_ de Kafka. Hay que tener en cuenta que para que funcione el ejemplo necesitamos una versión _0.11_ o superior
+por la versión de https://github.com/spring-projects/spring-integration-kafka[spring-integration-kafka] utilizada.
 
 En primer lugar adaptaremos nuestro _docker-compose.yml_ (dentro del repositorio está en la carpeta _env_) actualizando
 el _KAFKA_ADVERTISED_HOST_NAME_ la IP de nuestro bridge de docker (podemos consultarla ejecutando el comando _docker
