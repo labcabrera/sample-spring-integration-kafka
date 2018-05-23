@@ -45,8 +45,7 @@ por:
 IntegrationFlows
   .from(
     Amqp
-	  .inboundGateway(connectionFactory, amqpTemplate, contractCreateQueue())
-		.errorChannel(contractCreationErrorChannel())
+	    .inboundGateway(connectionFactory, amqpTemplate, contractCreateQueue())
 ----
 
 Manteniendo el resto de la aplicación funcionando del mismo modo.
