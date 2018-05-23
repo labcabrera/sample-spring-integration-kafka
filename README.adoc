@@ -1,8 +1,11 @@
 = Spring Integration - Apache Kafka - MongoDB sample application
 
-La aplicación contiene dos módulos que se comunican a través de Kafka. El primer módulo
-será un gateway que expondrá una API REST a través de la cual recibirá las peticiones. El segundo
-módulo contendrá la lógica de negocio escuchando los mensajes de una cola de Kafka utilizando para
+La aplicación contiene dos módulos que se comunican a través de Kafka. El
+https://github.com/labcabrera/sample-spring-integration-kafka/tree/master/tariff-calculator-gateway[primer módulo]
+será un gateway que expondrá una API REST a través de la cual recibirá las peticiones.
+El
+https://github.com/labcabrera/sample-spring-integration-kafka/tree/master/tariff-calculator-core[segundo módulo]
+contendrá la lógica de negocio escuchando los mensajes de una cola de Kafka utilizando para
 ello Spring Integration DSL.
 
 [source]
@@ -45,7 +48,7 @@ por:
 IntegrationFlows
   .from(
     Amqp
-	    .inboundGateway(connectionFactory, amqpTemplate, contractCreateQueue())
+      .inboundGateway(connectionFactory, amqpTemplate, someQueue)
 ----
 
 Manteniendo el resto de la aplicación funcionando del mismo modo.
