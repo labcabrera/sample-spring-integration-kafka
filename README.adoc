@@ -170,56 +170,74 @@ Una vez actualizada levantaremos los contenedores a través del comando:
 docker-compose up -d
 ----
 
-Una vez estén levantados los contenedores de zookeeper y de kafka consultaremos la IP de kafka para actualizar nuestra
+Una vez estén levantados los contenedores de mongodb, zookeeper y kafka consultaremos la IP de kafka para actualizar nuestra
 configuración:
 
 [source,bash]
 ----
 lab@lab:~/repositories/labcabrera/sample-spring-integration-kafka$ docker network ls
-NETWORK ID          NAME                   DRIVER              SCOPE
-5af81ac0dc0e        bridge                 bridge              local
-c52e5dc6a807        host                   host                local
-32a933232d33        kafka-docker_default   bridge              local
-d3fb1a8b67b9        kafka_default          bridge              local
-89657ae6adc9        none                   null                local
-lab@lab:~/repositories/labcabrera/sample-spring-integration-kafka$ docker network inspect kafka-docker_default
+NETWORK ID          NAME                DRIVER              SCOPE
+047b473973a4        bridge              bridge              local
+2bf80c4e2616        env_default         bridge              local
+c52e5dc6a807        host                host                local
+89657ae6adc9        none                null                local
+lab@lab:~/repositories/labcabrera/sample-spring-integration-kafka$ docker network inspect env_default 
 [
     {
-        ...
+        "Name": "env_default",
+        "Id": "2bf80c4e2616b0958fc8885eaae34082c5b87119f88aedd257ef5a2b88b1e050",
+        "Created": "2018-05-23T12:18:04.801746254+01:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
         "IPAM": {
             "Driver": "default",
             "Options": null,
             "Config": [
                 {
-                    "Subnet": "172.19.0.0/16",
-                    "Gateway": "172.19.0.1"
+                    "Subnet": "172.18.0.0/16",
+                    "Gateway": "172.18.0.1"
                 }
             ]
         },
-        ...
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
         "Containers": {
-            "35d55eef08f7008896076bc872640cfc33c7901aaecbdc9590c4525629e135b1": {
-                "Name": "kafka-docker_kafka_1",
-                "EndpointID": "c1267a2b85729d81e69a328fcb01b75ae72e6eaae720bcef234d3bd95eeabcc0",
-                "MacAddress": "02:42:ac:13:00:02",
-                "IPv4Address": "172.19.0.2/16",
+            "28f92d58d984d74d74d380a0e3893d0fe418590fce09ef4f447832f2facd2d83": {
+                "Name": "tf-mongodb",
+                "EndpointID": "769e86f49265a1fdcaf404aa5c5276c3b708618961207c9f88dc2f921a35d6d3",
+                "MacAddress": "02:42:ac:12:00:02",
+                "IPv4Address": "172.18.0.2/16",
                 "IPv6Address": ""
             },
-            "e45f7f873edc64110572ef5e18ec16f9e4a7af16f928a702c51806f404903449": {
-                "Name": "kafka-docker_zookeeper_1",
-                "EndpointID": "94c2ed61b9cb8cdbdbfaef58540491c2933b094b8e001defe9cb605abfdfa219",
-                "MacAddress": "02:42:ac:13:00:03",
-                "IPv4Address": "172.19.0.3/16",
+            "2b30d547f0cffc1d4d4923034f816d03f91cfea00501f3b7e909c4284fda57c6": {
+                "Name": "tf-kafka",
+                "EndpointID": "963c7aecd8bb5ccff8d5b8fd34372f72fa27aae150e58710fccb8d81200ac283",
+                "MacAddress": "02:42:ac:12:00:04",
+                "IPv4Address": "172.18.0.4/16",
+                "IPv6Address": ""
+            },
+            "8eb3f74bd3afbc13869de0bccc7e8b07597eaad8a0d168778ee46d395f340317": {
+                "Name": "tf-zookeeper",
+                "EndpointID": "ce1bb3233e85030cca19657bb210fe700fb325df4b89daf4dfdfe7f8b0edfa93",
+                "MacAddress": "02:42:ac:12:00:03",
+                "IPv4Address": "172.18.0.3/16",
                 "IPv6Address": ""
             }
-            ...
         },
-        ...
+        "Options": {},
+        "Labels": {}
     }
 ]
+
 ----
 
-En este caso el valor 172.19.0.2 será el que estableceremos en nuestro yml de configuración del proyecto gateway.
+En este caso el valor 172.18.0.4 será el que estableceremos en nuestro _yml_ de configuración tanto del proyecto core como del gateway.
 
 ////
 ----
