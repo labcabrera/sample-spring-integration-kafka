@@ -7,7 +7,7 @@ import org.springframework.data.annotation.Id;
 import lombok.Data;
 
 @Data
-public class CalculationInfo {
+public class CalculationHistory {
 
 	@Id
 	private String id;

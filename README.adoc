@@ -24,6 +24,33 @@ ello Spring Integration DSL.
 La información sobre cada cálculo se persistirá en mongodb, que también será utilizado para
 recuperar aquella información de negocio necesaria para realizar los cálculos.
 
+*¿Por qué utilizar Spring Integration?*
+
+La principal ventaja es que abstrae a nuestra aplicación de la infraestructura que vamos a tener. Por ejemplo la
+aplicación se podría cambiar de forma muy sencilla reemplazando Kafka por AMQP (RabbitMQ por ejemplo). De este
+modo simplemente tendríamos que tocar la configuración de integración cambiando por ejemplo:
+
+[source,java]
+----
+IntegrationFlows
+  .from(
+    Kafka
+      .messageDrivenChannelAdapter(consumerFactory, Topics.CalculationIn))
+----
+
+por:
+
+[source,java]
+----
+IntegrationFlows
+  .from(
+    Amqp
+	  .inboundGateway(connectionFactory, amqpTemplate, contractCreateQueue())
+		.errorChannel(contractCreationErrorChannel())
+----
+
+Manteniendo el resto de la aplicación funcionando del mismo modo.
+
 == Gateway app
 
 Este proyecto está construído con _maven_. Básicamente consta de un `@MessagingGateway` a partir del cual realizaremos
@@ -117,6 +144,16 @@ IntegrationFlow flowFromKafkaDummy(
       .topic(Topics.CalculationOut))
     .get();
 }
+----
+
+El proceso de cálculo es muy sencillo. Leerá de mongo una serie de valores preestablecidos en función del valor
+del campo _source_ recibido, generará un importe al azar combinándolo con el valor base y devolverá el resultado.
+
+Adicionalmente almacenará en mongo una referencia al cálculo solicitado:
+
+----
+> db.calculationHistory.find()
+{ "_id" : ObjectId("5b056eb7457e766f43b70d4d"), "request" : { "source" : "test" }, "response" : { "amount" : "72.11", "calculated" : ISODate("2018-05-23T13:37:59.948Z") }, "_class" : "org.lab.tariff.calculator.core.domain.CalculationHistory" }
 ----
 
 == Infraestructura en local
@@ -254,8 +291,11 @@ docker exec kafka /opt/kafka_2.11-0.10.1.0/bin/kafka-topics.sh --create --zookee
 En local podemos hacer una petición a la API REST para que envíe el mensaje a Kafka.
 
 ----
-curl -d '{"source":"test"}' -H "Content-Type: application/json" http://localhost:8080/api/v1/calculator
+$ curl -d '{"source":"test"}' -H "Content-Type: application/json" http://localhost:8080/api/v1/calculator
+{"reference":"5b056eb7457e766f43b70d4d","amount":72.11,"calculated":"2018-05-23T13:37:59.948+0000"}
 ----
+
+
 
 == Siguientes pasos
 

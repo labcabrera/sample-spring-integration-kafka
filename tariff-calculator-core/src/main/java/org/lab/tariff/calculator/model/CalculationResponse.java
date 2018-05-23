@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class CalculationResponse {
 
-	private String id;
+	private String reference;
 
 	private BigDecimal amount;
 
