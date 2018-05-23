@@ -7,7 +7,7 @@ El
 https://github.com/labcabrera/sample-spring-integration-kafka/tree/master/tariff-calculator-core[segundo módulo]
 contendrá la lógica de negocio escuchando los mensajes de una cola de Kafka utilizando para
 ello
-https://github.com/spring-projects/spring-integration-java-dsl/wiki/spring-integration-java-dsl-reference[Spring Integration DSL].
+https://docs.spring.io/spring-integration/docs/current/reference/html/[Spring Integration DSL].
 
 [source]
 ----
@@ -333,6 +333,7 @@ TODO
 == Referencias
 
 * https://kafka.apache.org/[Apache Kafka]
+* https://docs.spring.io/spring-integration/docs/current/reference/html/[Spring Integration Reference]
 * https://github.com/spring-projects/spring-integration-samples/tree/master/dsl/kafka-dsl
 * https://github.com/labcabrera/sample-spring-kafka
 * https://github.com/wurstmeister/kafka-docker
