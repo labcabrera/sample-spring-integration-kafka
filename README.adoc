@@ -326,7 +326,6 @@ TODO
 == Siguientes pasos
 
 * Integración PAAS: service discovery / distributed configuration
-* Dockerización de los 2 microservicios (plugins de maven y gradle)
 * Gestión de canales de errores
 * Registro dinámico de pipelines con Spring DSL
 
