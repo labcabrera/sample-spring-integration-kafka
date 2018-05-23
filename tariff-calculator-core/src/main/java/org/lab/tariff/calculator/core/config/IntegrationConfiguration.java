@@ -40,7 +40,7 @@ public class IntegrationConfiguration {
 		return IntegrationFlows
 			.from(
 				Kafka.messageDrivenChannelAdapter(consumerFactory, Topics.CalculationIn))
-			.log(Level.INFO, "processing kafka message")
+			.log(Level.INFO, IntegrationConfiguration.class.getName(), "\"Received Kafka calculation request\"")
 			.transform(Transformers.fromJson(mapper))
 			.handle(CalculationRequest.class, (request, headers) -> coreCalculator.calculate(request))
 			.transform(Transformers.toJson(mapper))

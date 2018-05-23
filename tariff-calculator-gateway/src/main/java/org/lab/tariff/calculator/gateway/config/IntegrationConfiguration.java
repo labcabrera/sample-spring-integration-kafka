@@ -65,7 +65,7 @@ public class IntegrationConfiguration {
 		return IntegrationFlows
 			.from(MessageChannels.publishSubscribe(Channels.CalculationIn))
 			.transform(Transformers.toJson(mapper))
-			.log(Level.INFO, "channel -> kafka")
+			.log(Level.INFO, IntegrationConfiguration.class.getName(), "\"Publishing Kafka calculation request\"")
 			.handle(Kafka
 				.outboundChannelAdapter(kafkaTemplate)
 				.messageKey(MessageKeys.CalculationMessageKey)
@@ -81,7 +81,7 @@ public class IntegrationConfiguration {
 			.from(Kafka
 				.messageDrivenChannelAdapter(consumerFactory, KafkaMessageDrivenChannelAdapter.ListenerMode.record, Topics.CalculationOut)
 				.recoveryCallback(new ErrorMessageSendingRecoverer(channelCalculatorError(), new RawRecordHeaderErrorMessageStrategy())))
-			.log(Level.INFO, "kafka -> channel")
+			.log(Level.INFO, IntegrationConfiguration.class.getName(), "\"Received Kafka calculation response\"")
 			.transform(Transformers.fromJson(CalculationResponse.class, mapper))
 			.channel(Channels.CalculationOut)
 			.get();
@@ -93,7 +93,7 @@ public class IntegrationConfiguration {
 	IntegrationFlow flowError(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
 		return IntegrationFlows
 			.from(MessageChannels.publishSubscribe(Channels.CalculationErr))
-			.log(Level.ERROR, "Error")
+			.log(Level.INFO, IntegrationConfiguration.class.getName(), "\"Received calculation error message\"")
 			.bridge()
 			.get();
 	}

@@ -1,19 +1,12 @@
 spring:
+  application:
+    name: tariff-calculator-gateway
   kafka:
     bootstrap-servers: ${KAFKA_HOST:172.18.0.2}:${KAFKA_PORT:9092}
     consumer:
       group-id: tf-calculator
 
-#      auto-offset-reset: earliest
-#      enable-auto-commit: false
-#      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-#    producer:
-#      batch-size: 16384
-#      buffer-memory: 33554432
-#      retries: 0
-#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-#      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-
-logging.level.org: INFO
-logging.level.org.lab: DEBUG
+logging:
+  level:
+    org: INFO
+    org.lab: DEBUG
