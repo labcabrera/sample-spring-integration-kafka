@@ -415,6 +415,7 @@ labcabrera/tariff-calculator-gateway   0.0.1-SNAPSHOT   4f7a7aaf81a3   5 seconds
 
 ----
 
+Esta imagen se puede obtener desde https://hub.docker.com/r/labcabrera/tariff-calculator-gateway/tags/.
 
 == Kubernetes
 
