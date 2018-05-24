@@ -5,6 +5,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface CalculationSourceDataRepository extends MongoRepository<CalculationSourceData, String> {
 
-	public CalculationSourceData findBySourceName(String name);
+	CalculationSourceData findBySourceName(String name);
 
 }
