@@ -358,7 +358,47 @@ la de realizar el push o realizar tags.
 
 === Plugin usando maven
 
-CAPTION: TODO
+En el caso de maven utilizaremos el plugin _dockerfile_ de
+https://github.com/spotify/dockerfile-maven[Spotify] a partir de un _Dockerfile_ con la misma
+estructura (tener en cuenta que cambia la parte `ADD ${JAR_FILE} app.jar` por
+`ADD target/${JAR_FILE} app.jar` nada más).
+
+La configuración del plugin es muy sencilla:
+
+[source,xml]
+----
+<plugin>
+  <groupId>com.spotify</groupId>
+  <artifactId>dockerfile-maven-plugin</artifactId>
+  <version>1.4.2</version>
+  <executions>
+    <execution>
+      <id>default</id>
+      <goals>
+        <goal>build</goal>
+        <goal>push</goal>
+      </goals>
+    </execution>
+  </executions>
+  <configuration>
+    <repository>labcabrera/tariff-calculator-gateway</repository>
+    <tag>${project.version}</tag>
+    <buildArgs>
+      <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
+    </buildArgs>
+  </configuration>
+</plugin>
+----
+
+Simplemente tendremos que hacer un _mvn package_ o un _mvn install_ para crear la imagen local:
+
+----
+$ docker images
+REPOSITORY                             TAG              IMAGE ID       CREATED             SIZE
+labcabrera/tariff-calculator-gateway   0.0.1-SNAPSHOT   4f7a7aaf81a3   5 seconds ago       138MB
+
+----
+
 
 == Kubernetes
 
