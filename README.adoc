@@ -326,6 +326,22 @@ image::https://raw.githubusercontent.com/labcabrera/sample-spring-integration-ka
 
 == Generación de las imágenes de docker
 
+=== Dockerfile
+
+La generación de las imágenes de Docker va a ser bastante sencilla dado que utilizando una imagen
+basada en openjdk no deberemos realizar ninguna configuración adicional:
+
+----
+FROM openjdk:8-jdk-alpine
+VOLUME /tmp
+ARG JAR_FILE
+ADD ${JAR_FILE} app.jar
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+----
+
+De modo que simplemente copiamos el jar ejecutable generado y lo lanzamos con la opción `java -jar`
+como cualquier aplicación Spring Boot.
+
 === Plugin usando gradle
 
 Para crear la imagen docker se utiliza el plugin https://github.com/palantir/gradle-docker[palantir]
