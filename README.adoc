@@ -416,7 +416,12 @@ labcabrera/tariff-calculator-gateway   0.0.1-SNAPSHOT   4f7a7aaf81a3   5 seconds
 
 == Kubernetes
 
-IMPORTANT: TODO
+IMPORTANT: No PAAS no honey
+
+== OpenShift
+
+En este https://github.com/labcabrera/http-network-diagnostic[repositorio] se explica brevemente
+cómo desplegar una microservicio con Spring Boot en OpenShift.
 
 == Referencias
 
