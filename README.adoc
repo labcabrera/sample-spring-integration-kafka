@@ -30,16 +30,17 @@ recuperar aquella información de negocio necesaria para realizar los cálculos.
 
 *¿Por qué utilizar Spring Integration?*
 
-La principal ventaja es que abstrae a nuestra aplicación de la infraestructura que vamos a tener. Por ejemplo la
-aplicación se podría cambiar de forma muy sencilla reemplazando Kafka por AMQP (RabbitMQ por ejemplo). De este
-modo simplemente tendríamos que tocar la configuración de integración cambiando por ejemplo:
+La principal ventaja es que abstrae a nuestra aplicación de la infraestructura que vamos a tener.
+Por ejemplo la aplicación se podría cambiar de forma muy sencilla reemplazando Kafka por AMQP
+(RabbitMQ por ejemplo). De este modo simplemente tendríamos que tocar la configuración de
+integración cambiando por ejemplo:
 
 [source,java]
 ----
 IntegrationFlows
   .from(
     Kafka
-      .messageDrivenChannelAdapter(consumerFactory, Topics.CalculationIn))
+      .messageDrivenChannelAdapter(consumerFactory, topidName))
 ----
 
 por:
@@ -56,8 +57,8 @@ Manteniendo el resto de la aplicación funcionando del mismo modo.
 
 == Gateway app
 
-Este proyecto está construído con _maven_. Básicamente consta de un `@MessagingGateway` a partir del cual realizaremos
-las llamadas a partir del controlador `CalculatorController`:
+Este proyecto está construido con _maven_. Básicamente consta de un `@MessagingGateway` a partir del
+cual realizaremos las llamadas a partir del controlador `CalculatorController`:
 
 [source,java]
 ----
@@ -73,7 +74,8 @@ public class CalculatorController {
 }
 ----
 
-Nuestro gateway se integra con los dos canales de entrada y salida que hemos definido en la clase `IntegrationConfiguration`.
+Nuestro gateway se integra con los dos canales de entrada y salida que hemos definido en la clase
+`IntegrationConfiguration`.
 
 En primer lugar nuestro canal de entrada enviará los mensajes que recibe a Kafka:
 
@@ -95,7 +97,7 @@ IntegrationFlow inputChannelToKafkaFlow(
 }
 ----
 
-Y para recibir las respuestas escucha de Kafka enviando los mensajes al canal que escucha nuestro Gateway:
+Y después definiremos nuestro flujo de recepción de mensajes de respuesta:
 
 [source,java]
 ----
@@ -120,8 +122,9 @@ IntegrationFlow kafkaToOutputChannelFlow(
 
 == Core app
 
-Este proyecto está construído con _grade_ en lugar de _maven_. Básicamente escucha un _topic_ de Kafka y cuando recibe
-los mensajes invoca la lógica de negocio y escribe los resultados en otro _topic_.
+Este proyecto está construído con _grade_ en lugar de _maven_. Básicamente escucha un _topic_ de
+Kafka y cuando recibe los mensajes invoca la lógica de negocio y escribe los resultados en otro
+_topic_ de salida.
 
 Esto lo hacemos a través de la siguiente configuración:
 
@@ -146,8 +149,9 @@ IntegrationFlow flowFromKafkaDummy(
 }
 ----
 
-El proceso de cálculo es muy sencillo. Leerá de mongo una serie de valores preestablecidos en función del valor
-del campo _source_ recibido, generará un importe al azar combinándolo con el valor base y devolverá el resultado.
+El proceso de cálculo es muy sencillo. Leerá de mongo una serie de valores preestablecidos en
+función del valor del campo _source_ recibido, generará un importe al azar combinándolo con el valor
+base y devolverá el resultado.
 
 Adicionalmente almacenará en mongo una referencia al cálculo solicitado:
 
@@ -172,13 +176,15 @@ public interface CalculationSourceDataRepository extends MongoRepository<Calcula
 
 == Montando el proyecto en local
 
-Para este ejemplo utilizaremos la siguiente versión dockerizada de Kafka https://hub.docker.com/r/wurstmeister/kafka/[wurstmeister/kafka]. Esta
-está basada en una versión _1.1.0_ de Kafka. Hay que tener en cuenta que para que funcione el ejemplo necesitamos una versión _0.11_ o superior
-por la versión de https://github.com/spring-projects/spring-integration-kafka[spring-integration-kafka] utilizada.
+Para este ejemplo utilizaremos la siguiente versión dockerizada de Kafka
+https://hub.docker.com/r/wurstmeister/kafka/[wurstmeister/kafka]. Esta basada en una versión
+_1.1.0_ de Kafka. Hay que tener en cuenta que para que funcione el ejemplo necesitamos una versión
+_0.11_ o superior por la versión de
+https://github.com/spring-projects/spring-integration-kafka[spring-integration-kafka] utilizada.
 
-En primer lugar adaptaremos nuestro _docker-compose.yml_ (dentro del repositorio está en la carpeta _env_) actualizando
-el _KAFKA_ADVERTISED_HOST_NAME_ la IP de nuestro bridge de docker (podemos consultarla ejecutando el comando _docker
-network inspect bridge_):
+En primer lugar adaptaremos nuestro _docker-compose.yml_ (dentro del repositorio está en la carpeta
+_env_) actualizando el _KAFKA_ADVERTISED_HOST_NAME_ la IP de nuestro bridge de docker (podemos
+consultarla ejecutando el comando `docker network inspect`):
 
 [source,yml]
 ----
@@ -223,8 +229,8 @@ Una vez actualizada levantaremos los contenedores a través del comando:
 docker-compose up -d
 ----
 
-Una vez estén levantados los contenedores de mongodb, zookeeper y kafka consultaremos la IP de kafka para actualizar nuestra
-configuración:
+Una vez estén levantados los contenedores de mongodb, zookeeper y kafka consultaremos la IP de Kafka
+para actualizar nuestra configuración:
 
 [source,bash]
 ----
@@ -304,17 +310,17 @@ spring:
 
 == Probando el sistema en local
 
-Una vez hemos arrancado los contenedores de Kafka y MongoDB, simplemente tendremos que arrancar tanto el core como el gateway y podemos
-comprobar el funcionamiento de la aplicación a través de la API REST:
+Una vez hemos arrancado los contenedores de Kafka y MongoDB, simplemente tendremos que arrancar
+tanto el core como el gateway y podemos comprobar el funcionamiento de la aplicación a través de
+nuestra API REST:
 
 ----
 $ curl -d '{"source":"test"}' -H "Content-Type: application/json" http://localhost:8080/api/v1/calculator
 {"reference":"5b056eb7457e766f43b70d4d","amount":72.11,"calculated":"2018-05-23T13:37:59.948+0000"}
 ----
 
-También podremos hacer la petición utilizando la integración de Swagger proporcionada por http://springfox.github.io/springfox/[SpringFox]:
-
-http://localhost:8080/swagger-ui.html
+También podremos hacer la petición utilizando la integración de Swagger proporcionada por
+http://springfox.github.io/springfox/[SpringFox]: http://localhost:8080/swagger-ui.html
 
 image::https://raw.githubusercontent.com/labcabrera/sample-spring-integration-kafka/master/docs/swagger-ui-capture.png[Swagger-UI]
 
@@ -322,7 +328,8 @@ image::https://raw.githubusercontent.com/labcabrera/sample-spring-integration-ka
 
 === Plugin usando gradle
 
-Para crear la imagen docker se utiliza el plugin https://github.com/palantir/gradle-docker[palantir] de gradle.
+Para crear la imagen docker se utiliza el plugin https://github.com/palantir/gradle-docker[palantir]
+de gradle.
 
 Para crear la imagen simplemente ejecutaremos:
 
@@ -330,7 +337,8 @@ Para crear la imagen simplemente ejecutaremos:
 $ gradle build docker
 ----
 
-Aparte de la generación local de la imagen el plugin también nos ofrece otras funcionalidades como la de realizar el push o realizar tags.
+Aparte de la generación local de la imagen el plugin también nos ofrece otras funcionalidades como
+la de realizar el push o realizar tags.
 
 === Plugin usando maven
 
