@@ -156,7 +156,21 @@ Adicionalmente almacenará en mongo una referencia al cálculo solicitado:
 { "_id" : ObjectId("5b056eb7457e766f43b70d4d"), "request" : { "source" : "test" }, "response" : { "amount" : "72.11", "calculated" : ISODate("2018-05-23T13:37:59.948Z") }, "_class" : "org.lab.tariff.calculator.core.domain.CalculationHistory" }
 ----
 
-== Infraestructura en local
+La comunicación con MongoDB la realizaremos a través del proyecto 
+https://spring.io/guides/gs/accessing-data-mongodb/[spring-boot-starter-data-mongodb]. Simplemente
+tendremos que añadir la anotación `@EnableMongoRepositories` y definir aquellas interfaces que
+utilizarán nuestras entidades:
+
+[source,java]
+----
+public interface CalculationSourceDataRepository extends MongoRepository<CalculationSourceData, String> {
+
+	CalculationSourceData findBySourceName(String name);
+
+}
+----
+
+== Montando el proyecto en local
 
 Para este ejemplo utilizaremos la siguiente versión dockerizada de Kafka https://hub.docker.com/r/wurstmeister/kafka/[wurstmeister/kafka]. Esta
 está basada en una versión _1.1.0_ de Kafka. Hay que tener en cuenta que para que funcione el ejemplo necesitamos una versión _0.11_ o superior
@@ -288,7 +302,7 @@ spring:
       group-id: tf-calculator
 ----
 
-== Probando el sistema localmente
+== Probando el sistema en local
 
 Una vez hemos arrancado los contenedores de Kafka y MongoDB, simplemente tendremos que arrancar tanto el core como el gateway y podemos
 comprobar el funcionamiento de la aplicación a través de la API REST:
