@@ -306,17 +306,7 @@ Para crear la imagen simplemente ejecutaremos:
 $ gradle build docker
 ----
 
-Y después simplemente tendremos que ejecutar nuestra imagen del modo habitual:
-
-----
-$ docker run -i -p PORT:PORT -t labcabrera/tariff-calculator-core
----- 
-
-A partir del plugin también podemos hacer el push a https://hub.docker.com/[Docker Hub]:
-
-----
-$ gradle dockerPush
-----
+Aparte de la generación local de la imagen el plugin también nos ofrece otras funcionalidades como la de realizar el push o realizar tags.
 
 === Plugin usando maven
 
