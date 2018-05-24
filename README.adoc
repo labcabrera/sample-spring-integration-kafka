@@ -414,7 +414,7 @@ labcabrera/tariff-calculator-gateway   0.0.1-SNAPSHOT   4f7a7aaf81a3   5 seconds
 
 == Kubernetes
 
-CAPTION: TODO
+CAUTION: TODO
 
 == Referencias
 
