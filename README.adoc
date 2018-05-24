@@ -347,6 +347,18 @@ como cualquier aplicación Spring Boot.
 Para crear la imagen docker se utiliza el plugin https://github.com/palantir/gradle-docker[palantir]
 de gradle.
 
+La configuración del plugin es realmente sencilla:
+
+[source]
+----
+docker {
+  name "labcabrera/${jar.baseName}"
+  tags 'latest'
+  files jar.archivePath
+  buildArgs(['JAR_FILE': "${jar.archiveName}"])
+}
+----
+
 Para crear la imagen simplemente ejecutaremos:
 
 ----
