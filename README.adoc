@@ -1,5 +1,7 @@
 = Spring Integration - Apache Kafka - MongoDB sample application
 
+:important-caption: :heavy_exclamation_mark:
+
 La aplicación contiene dos módulos que se comunican a través de Kafka. El
 https://github.com/labcabrera/sample-spring-integration-kafka/tree/master/tariff-calculator-gateway[primer módulo]
 será un gateway que expondrá una API REST a través de la cual recibirá las peticiones.
@@ -414,7 +416,7 @@ labcabrera/tariff-calculator-gateway   0.0.1-SNAPSHOT   4f7a7aaf81a3   5 seconds
 
 == Kubernetes
 
-CAUTION: TODO
+IMPORTANT: TODO
 
 == Referencias
 
