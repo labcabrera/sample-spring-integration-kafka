@@ -75,7 +75,7 @@ public class CalculatorController {
 ----
 
 Nuestro gateway se integra con los dos canales de entrada y salida que hemos definido en la clase
-`IntegrationConfiguration`.
+https://github.com/labcabrera/sample-spring-integration-kafka/blob/master/tariff-calculator-gateway/src/main/java/org/lab/tariff/calculator/gateway/config/IntegrationConfiguration.java[IntegrationConfiguration]
 
 En primer lugar nuestro canal de entrada enviará los mensajes que recibe a Kafka:
 
