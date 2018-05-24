@@ -299,7 +299,7 @@ lab@lab:~/repositories/labcabrera/sample-spring-integration-kafka$ docker networ
 En este caso, el valor _172.18.0.4_ será el que estableceremos en nuestros ficheros de configuración
 tanto del proyecto _core_ como del _gateway_:
 
-[source,yml}
+[source,yml]
 ----
 spring:
   kafka:
