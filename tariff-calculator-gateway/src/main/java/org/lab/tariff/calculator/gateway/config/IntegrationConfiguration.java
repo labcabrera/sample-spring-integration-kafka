@@ -11,8 +11,8 @@ import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
+import org.springframework.integration.dsl.MessageChannels;
 import org.springframework.integration.dsl.Transformers;
-import org.springframework.integration.dsl.channel.MessageChannels;
 import org.springframework.integration.handler.LoggingHandler.Level;
 import org.springframework.integration.handler.advice.ErrorMessageSendingRecoverer;
 import org.springframework.integration.kafka.dsl.Kafka;
@@ -59,7 +59,6 @@ public class IntegrationConfiguration {
 		return MessageChannels.direct().get();
 	}
 
-	//@formatter:off
 	@Bean
 	IntegrationFlow inputChannelToKafkaFlow(KafkaTemplate<String, String> kafkaTemplate, JsonObjectMapper<?, ?> mapper) {
 		return IntegrationFlows
@@ -72,9 +71,7 @@ public class IntegrationConfiguration {
 				.topic(Topics.CalculationIn))
 			.get();
 	}
-	//@formatter:on
 
-	//@formatter:off
 	@Bean
 	IntegrationFlow kafkaToOutputChannelFlow(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
 		return IntegrationFlows
@@ -86,9 +83,7 @@ public class IntegrationConfiguration {
 			.channel(Channels.CalculationOut)
 			.get();
 	}
-	//@formatter:on
 
-	//@formatter:off
 	@Bean
 	IntegrationFlow flowError(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
 		return IntegrationFlows
@@ -97,6 +92,5 @@ public class IntegrationConfiguration {
 			.bridge()
 			.get();
 	}
-	//@formatter:on
 
 }

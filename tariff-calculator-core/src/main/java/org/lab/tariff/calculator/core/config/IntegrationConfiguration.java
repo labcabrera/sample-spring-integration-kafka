@@ -30,12 +30,11 @@ public class IntegrationConfiguration {
 		return new Jackson2JsonObjectMapper();
 	}
 
-	//@formatter:off
 	@Bean
 	IntegrationFlow flowFromKafkaDummy(
-			KafkaTemplate<String, String> kafkaTemplate,
-			ConsumerFactory<String, String> consumerFactory,
-			JsonObjectMapper<?, ?> mapper) {
+		KafkaTemplate<String, String> kafkaTemplate,
+		ConsumerFactory<String, String> consumerFactory,
+		JsonObjectMapper<?, ?> mapper) {
 
 		return IntegrationFlows
 			.from(
@@ -50,6 +49,5 @@ public class IntegrationConfiguration {
 					.topic(Topics.CalculationOut))
 			.get();
 	}
-	//@formatter:on
 
 }
