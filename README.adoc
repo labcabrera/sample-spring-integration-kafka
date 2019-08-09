@@ -178,6 +178,17 @@ public interface CalculationSourceDataRepository extends MongoRepository<Calcula
 
 == Montando el proyecto en local
 
+En primer lugar levantaremos la imagen de Kafka a través del _docker-compose_ situado en la carpeta _env_:
+
+----
+cd env
+export DOCKER_HOST_IP=127.0.0.1
+docker-compose up -d
+----
+
+////
+https://github.com/spring-projects/spring-integration-kafka/
+
 Para este ejemplo utilizaremos la siguiente versión dockerizada de Kafka
 https://hub.docker.com/r/wurstmeister/kafka/[wurstmeister/kafka]. Esta basada en una versión
 _1.1.0_ de Kafka. Hay que tener en cuenta que para que funcione el ejemplo necesitamos una versión
@@ -309,6 +320,7 @@ spring:
     consumer:
       group-id: tf-calculator
 ----
+////
 
 == Probando el sistema en local
 
@@ -317,14 +329,12 @@ tanto el core como el gateway y podemos comprobar el funcionamiento de la aplica
 nuestra API REST:
 
 ----
-$ curl -d '{"source":"test"}' -H "Content-Type: application/json" http://localhost:8080/api/v1/calculator
+$ curl -d '{"source":"test"}' -H "Content-Type: application/json" http://localhost:8080/calculator
 {"reference":"5b056eb7457e766f43b70d4d","amount":72.11,"calculated":"2018-05-23T13:37:59.948+0000"}
 ----
 
 También podremos hacer la petición utilizando la integración de Swagger proporcionada por
 http://springfox.github.io/springfox/[SpringFox]: http://localhost:8080/swagger-ui.html
-
-image::https://raw.githubusercontent.com/labcabrera/sample-spring-integration-kafka/master/docs/swagger-ui-capture.png[Swagger-UI]
 
 == Generación de las imágenes de docker
 
@@ -337,8 +347,8 @@ basada en openjdk no deberemos realizar ninguna configuración adicional:
 FROM openjdk:8-jdk-alpine
 VOLUME /tmp
 ARG JAR_FILE
-ADD ${JAR_FILE} app.jar
-ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+COPY ${JAR_FILE} /opt/cnpparners/app.jar
+ENTRYPOINT exec java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar /opt/cnpparners/app.jar
 ----
 
 De modo que simplemente copiamos el jar ejecutable generado y lo lanzamos con la opción `java -jar`
@@ -355,6 +365,7 @@ La configuración del plugin es realmente sencilla:
 ----
 docker {
   name "labcabrera/${jar.baseName}"
+  dockerfile file('Docker/Dockerfile')
   tags 'latest'
   files jar.archivePath
   buildArgs(['JAR_FILE': "${jar.archiveName}"])
@@ -371,55 +382,6 @@ Aparte de la generación local de la imagen el plugin también nos ofrece otras 
 la de realizar el push o realizar tags.
 
 Esta imagen se puede obtener desde https://hub.docker.com/r/labcabrera/tariff-calculator-core/tags/.
-
-=== Plugin usando maven
-
-En el caso de maven utilizaremos el plugin _dockerfile_ de
-https://github.com/spotify/dockerfile-maven[Spotify] a partir de un _Dockerfile_ con la misma
-estructura (tener en cuenta que cambia la parte `ADD ${JAR_FILE} app.jar` por
-`ADD target/${JAR_FILE} app.jar` nada más).
-
-La configuración del plugin es muy sencilla:
-
-[source,xml]
-----
-<plugin>
-  <groupId>com.spotify</groupId>
-  <artifactId>dockerfile-maven-plugin</artifactId>
-  <version>1.4.2</version>
-  <executions>
-    <execution>
-      <id>default</id>
-      <goals>
-        <goal>build</goal>
-        <goal>push</goal>
-      </goals>
-    </execution>
-  </executions>
-  <configuration>
-    <repository>labcabrera/tariff-calculator-gateway</repository>
-    <tag>${project.version}</tag>
-    <buildArgs>
-      <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
-    </buildArgs>
-  </configuration>
-</plugin>
-----
-
-Simplemente tendremos que hacer un _mvn package_ o un _mvn install_ para crear la imagen local:
-
-----
-$ docker images
-REPOSITORY                             TAG              IMAGE ID       CREATED             SIZE
-labcabrera/tariff-calculator-gateway   0.0.1-SNAPSHOT   4f7a7aaf81a3   5 seconds ago       138MB
-
-----
-
-Esta imagen se puede obtener desde https://hub.docker.com/r/labcabrera/tariff-calculator-gateway/tags/.
-
-== Kubernetes
-
-IMPORTANT: No PAAS no honey
 
 == OpenShift
 

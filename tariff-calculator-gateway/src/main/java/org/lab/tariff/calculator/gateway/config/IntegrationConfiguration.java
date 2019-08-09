@@ -1,96 +1,75 @@
 package org.lab.tariff.calculator.gateway.config;
 
 import org.apache.kafka.clients.admin.NewTopic;
-import org.lab.tariff.calculator.gateway.Constants.Channels;
-import org.lab.tariff.calculator.gateway.Constants.MessageKeys;
-import org.lab.tariff.calculator.gateway.Constants.Topics;
 import org.lab.tariff.calculator.model.CalculationResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
-import org.springframework.integration.dsl.MessageChannels;
 import org.springframework.integration.dsl.Transformers;
 import org.springframework.integration.handler.LoggingHandler.Level;
-import org.springframework.integration.handler.advice.ErrorMessageSendingRecoverer;
 import org.springframework.integration.kafka.dsl.Kafka;
-import org.springframework.integration.kafka.inbound.KafkaMessageDrivenChannelAdapter;
-import org.springframework.integration.kafka.support.RawRecordHeaderErrorMessageStrategy;
-import org.springframework.integration.support.json.Jackson2JsonObjectMapper;
 import org.springframework.integration.support.json.JsonObjectMapper;
 import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.PollableChannel;
+import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.KafkaMessageListenerContainer;
+import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 
 @Configuration
 @EnableIntegration
 public class IntegrationConfiguration {
 
-	@Bean
-	JsonObjectMapper<?, ?> mapper() {
-		return new Jackson2JsonObjectMapper();
-	}
+	public static final String CHANNEL_NAME_IN = "channelCalculationIn";
+	public static final String CHANNEL_NAME_OUT = "channelCalculationOut";
+	public static final String TOPIC_NAME_IN = "calculationTopicRequest";
+	public static final String TOPIC_NAME_OUT = "calculationTopicReplies";
+	public static final String MESSAGE_KEY = "calculationMessageKey";
+
+	@Autowired
+	private JsonObjectMapper<?, ?> mapper;
+
+	@Value("${topic.partitions:10}")
+	private int partitions;
+
+	@Value("${topic.replication-factor:2}")
+	private short topicReplicationFactor;
 
 	@Bean
-	NewTopic topicCalculationIn() {
-		return new NewTopic(Topics.CalculationIn, 1, (short) 1);
-	}
-
-	@Bean
-	NewTopic topicCalculationOut() {
-		return new NewTopic(Topics.CalculationOut, 1, (short) 1);
-	}
-
-	@Bean(name = Channels.CalculationIn)
-	MessageChannel channelCalculatorIn() {
-		return MessageChannels.direct().get();
-	}
-
-	@Bean(name = Channels.CalculationOut)
-	public PollableChannel channelCalculatorOut() {
-		return new QueueChannel();
-	}
-
-	@Bean(name = Channels.CalculationErr)
-	MessageChannel channelCalculatorError() {
-		return MessageChannels.direct().get();
+	NewTopic calculationTopicRequest() {
+		return new NewTopic(TOPIC_NAME_IN, partitions, topicReplicationFactor);
 	}
 
 	@Bean
-	IntegrationFlow inputChannelToKafkaFlow(KafkaTemplate<String, String> kafkaTemplate, JsonObjectMapper<?, ?> mapper) {
-		return IntegrationFlows
-			.from(MessageChannels.publishSubscribe(Channels.CalculationIn))
+	NewTopic calculationTopicReplies() {
+		return new NewTopic(TOPIC_NAME_OUT, partitions, topicReplicationFactor);
+	}
+
+	@Bean
+	IntegrationFlow outboundGateFlow(ReplyingKafkaTemplate<String, String, String> kafkaTemplate) {
+		return IntegrationFlows.from(CHANNEL_NAME_IN)
+			.log(Level.DEBUG, getClass().getName(), m -> String.format("Sending calculation request: %s", m))
 			.transform(Transformers.toJson(mapper))
-			.log(Level.INFO, IntegrationConfiguration.class.getName(), "\"Publishing Kafka calculation request\"")
-			.handle(Kafka
-				.outboundChannelAdapter(kafkaTemplate)
-				.messageKey(MessageKeys.CalculationMessageKey)
-				.topic(Topics.CalculationIn))
-			.get();
-	}
-
-	@Bean
-	IntegrationFlow kafkaToOutputChannelFlow(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
-		return IntegrationFlows
-			.from(Kafka
-				.messageDrivenChannelAdapter(consumerFactory, KafkaMessageDrivenChannelAdapter.ListenerMode.record, Topics.CalculationOut)
-				.recoveryCallback(new ErrorMessageSendingRecoverer(channelCalculatorError(), new RawRecordHeaderErrorMessageStrategy())))
-			.log(Level.INFO, IntegrationConfiguration.class.getName(), "\"Received Kafka calculation response\"")
+			.handle(Kafka.outboundGateway(kafkaTemplate).topic(TOPIC_NAME_IN).messageKey("calculateMessageKey"))
+			.log(Level.DEBUG, getClass().getName(), m -> String.format("Received calculation response: %s", m))
 			.transform(Transformers.fromJson(CalculationResponse.class, mapper))
-			.channel(Channels.CalculationOut)
+			.channel(CHANNEL_NAME_OUT)
 			.get();
 	}
 
 	@Bean
-	IntegrationFlow flowError(ConsumerFactory<String, String> consumerFactory, JsonObjectMapper<?, ?> mapper) {
-		return IntegrationFlows
-			.from(MessageChannels.publishSubscribe(Channels.CalculationErr))
-			.log(Level.INFO, IntegrationConfiguration.class.getName(), "\"Received calculation error message\"")
-			.bridge()
-			.get();
+	KafkaMessageListenerContainer<String, String> replyContainer(ConsumerFactory<String, String> consumerFactory) {
+		ContainerProperties properties = new ContainerProperties(TOPIC_NAME_OUT);
+		return new KafkaMessageListenerContainer<>(consumerFactory, properties);
+	}
+
+	@Bean
+	ReplyingKafkaTemplate<String, String, String> kafkaTemplate(ProducerFactory<String, String> pf,
+		KafkaMessageListenerContainer<String, String> replyContainer) {
+		return new ReplyingKafkaTemplate<>(pf, replyContainer);
 	}
 
 }
