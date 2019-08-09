@@ -50,10 +50,14 @@ public class IntegrationConfiguration {
 
 	@Bean
 	IntegrationFlow outboundGateFlow(ReplyingKafkaTemplate<String, String, String> kafkaTemplate) {
-		return IntegrationFlows.from(CHANNEL_NAME_IN)
+		return IntegrationFlows
+			.from(CHANNEL_NAME_IN)
 			.log(Level.DEBUG, getClass().getName(), m -> String.format("Sending calculation request: %s", m))
 			.transform(Transformers.toJson(mapper))
-			.handle(Kafka.outboundGateway(kafkaTemplate).topic(TOPIC_NAME_IN).messageKey("calculateMessageKey"))
+			.handle(Kafka
+				.outboundGateway(kafkaTemplate)
+				.topic(TOPIC_NAME_IN)
+				.messageKey(MESSAGE_KEY))
 			.log(Level.DEBUG, getClass().getName(), m -> String.format("Received calculation response: %s", m))
 			.transform(Transformers.fromJson(CalculationResponse.class, mapper))
 			.channel(CHANNEL_NAME_OUT)
