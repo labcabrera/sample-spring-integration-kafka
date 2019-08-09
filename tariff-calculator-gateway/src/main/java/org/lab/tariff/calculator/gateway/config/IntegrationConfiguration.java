@@ -3,7 +3,6 @@ package org.lab.tariff.calculator.gateway.config;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.lab.tariff.calculator.model.CalculationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.config.EnableIntegration;
@@ -25,27 +24,21 @@ public class IntegrationConfiguration {
 
 	public static final String CHANNEL_NAME_IN = "channelCalculationIn";
 	public static final String CHANNEL_NAME_OUT = "channelCalculationOut";
-	public static final String TOPIC_NAME_IN = "calculationTopicRequest";
-	public static final String TOPIC_NAME_OUT = "calculationTopicReplies";
-	public static final String MESSAGE_KEY = "calculationMessageKey";
+
+	@Autowired
+	private KafkaProperties kafkaProperties;
 
 	@Autowired
 	private JsonObjectMapper<?, ?> mapper;
 
-	@Value("${topic.partitions:10}")
-	private int partitions;
-
-	@Value("${topic.replication-factor:2}")
-	private short topicReplicationFactor;
-
 	@Bean
 	NewTopic calculationTopicRequest() {
-		return new NewTopic(TOPIC_NAME_IN, partitions, topicReplicationFactor);
+		return new NewTopic(kafkaProperties.getTopicIn(), kafkaProperties.getTopicPartitions(), kafkaProperties.getReplicationFactor());
 	}
 
 	@Bean
 	NewTopic calculationTopicReplies() {
-		return new NewTopic(TOPIC_NAME_OUT, partitions, topicReplicationFactor);
+		return new NewTopic(kafkaProperties.getTopicOut(), kafkaProperties.getTopicPartitions(), kafkaProperties.getReplicationFactor());
 	}
 
 	@Bean
@@ -56,8 +49,8 @@ public class IntegrationConfiguration {
 			.transform(Transformers.toJson(mapper))
 			.handle(Kafka
 				.outboundGateway(kafkaTemplate)
-				.topic(TOPIC_NAME_IN)
-				.messageKey(MESSAGE_KEY))
+				.topic(kafkaProperties.getTopicIn())
+				.messageKey(kafkaProperties.getMessageKey()))
 			.log(Level.DEBUG, getClass().getName(), m -> String.format("Received calculation response: %s", m))
 			.transform(Transformers.fromJson(CalculationResponse.class, mapper))
 			.channel(CHANNEL_NAME_OUT)
@@ -66,7 +59,7 @@ public class IntegrationConfiguration {
 
 	@Bean
 	KafkaMessageListenerContainer<String, String> replyContainer(ConsumerFactory<String, String> consumerFactory) {
-		ContainerProperties properties = new ContainerProperties(TOPIC_NAME_OUT);
+		ContainerProperties properties = new ContainerProperties(kafkaProperties.getTopicOut());
 		return new KafkaMessageListenerContainer<>(consumerFactory, properties);
 	}
 

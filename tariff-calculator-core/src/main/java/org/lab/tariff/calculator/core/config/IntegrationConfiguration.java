@@ -1,7 +1,6 @@
 package org.lab.tariff.calculator.core.config;
 
 import org.lab.tariff.calculator.core.services.CoreCalculator;
-import org.lab.tariff.calculator.model.CalculationRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,9 +19,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 @EnableIntegration
 public class IntegrationConfiguration {
 
-	public static final String TOPIC_NAME_IN = "calculationTopicRequest";
-	public static final String TOPIC_NAME_OUT = "calculationTopicReplies";
-	public static final String MESSAGE_KEY = "calculationMessageKey";
+	@Autowired
+	private KafkaProperties kafkaProperties;
 
 	@Autowired
 	private CoreCalculator coreCalculator;
@@ -39,15 +37,17 @@ public class IntegrationConfiguration {
 		JsonObjectMapper<?, ?> mapper) {
 
 		return IntegrationFlows
-			.from(Kafka.messageDrivenChannelAdapter(consumerFactory, TOPIC_NAME_IN))
+			.from(Kafka
+				.messageDrivenChannelAdapter(consumerFactory, kafkaProperties.getTopicIn()))
 			.log(Level.DEBUG, getClass().getName(), m -> String.format("Received calculation request: %s", m))
 			.transform(Transformers.fromJson(mapper))
-			.handle(CalculationRequest.class, (request, headers) -> coreCalculator.calculate(request))
+			.handle(coreCalculator)
 			.transform(Transformers.toJson(mapper))
 			.log(Level.DEBUG, getClass().getName(), m -> String.format("Returning calculation response: %s", m))
-			.handle(Kafka.outboundChannelAdapter(kafkaTemplate)
-				.messageKey(MESSAGE_KEY)
-				.topic(TOPIC_NAME_OUT))
+			.handle(Kafka
+				.outboundChannelAdapter(kafkaTemplate)
+				.messageKey(kafkaProperties.getMessageKey())
+				.topic(kafkaProperties.getTopicOut()))
 			.get();
 	}
 

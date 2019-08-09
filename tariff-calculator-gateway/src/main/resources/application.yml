@@ -6,7 +6,18 @@ spring:
     consumer:
       group-id: tf-calculator
 
+server:
+  port: 8081
+
 logging:
   level:
     root: WARN
     org.lab: DEBUG
+
+app:
+  kafka:
+    topic-in: calculationTopicRequest
+    topic-out: calculationTopicReplies
+    message-mey: calculationMessageKey
+    topic-partitions: 10
+    replication-factor: 2
