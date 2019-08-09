@@ -11,6 +11,8 @@ import org.lab.tariff.calculator.core.repositories.CalculationSourceDataReposito
 import org.lab.tariff.calculator.model.CalculationRequest;
 import org.lab.tariff.calculator.model.CalculationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.integration.handler.GenericHandler;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -18,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
-public class CoreCalculator {
+public class CoreCalculator implements GenericHandler<CalculationRequest> {
 
 	@Autowired
 	private CalculationSourceDataRepository sourceRepository;
@@ -26,7 +28,8 @@ public class CoreCalculator {
 	@Autowired
 	private CalculationHistoryRepository historyRepository;
 
-	public CalculationResponse calculate(CalculationRequest request) {
+	@Override
+	public CalculationResponse handle(CalculationRequest request, MessageHeaders headers) {
 		log.info("Performing internal calculation: {}", request);
 		CalculationResponse response = calculateResponse(request);
 

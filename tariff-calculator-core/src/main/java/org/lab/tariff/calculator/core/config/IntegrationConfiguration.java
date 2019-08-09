@@ -1,9 +1,6 @@
 package org.lab.tariff.calculator.core.config;
 
-import org.lab.tariff.calculator.core.Constants.MessageKeys;
-import org.lab.tariff.calculator.core.Constants.Topics;
 import org.lab.tariff.calculator.core.services.CoreCalculator;
-import org.lab.tariff.calculator.model.CalculationRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +20,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 public class IntegrationConfiguration {
 
 	@Autowired
+	private KafkaProperties kafkaProperties;
+
+	@Autowired
 	private CoreCalculator coreCalculator;
 
 	@Bean
@@ -30,26 +30,25 @@ public class IntegrationConfiguration {
 		return new Jackson2JsonObjectMapper();
 	}
 
-	//@formatter:off
 	@Bean
 	IntegrationFlow flowFromKafkaDummy(
-			KafkaTemplate<String, String> kafkaTemplate,
-			ConsumerFactory<String, String> consumerFactory,
-			JsonObjectMapper<?, ?> mapper) {
+		KafkaTemplate<String, String> kafkaTemplate,
+		ConsumerFactory<String, String> consumerFactory,
+		JsonObjectMapper<?, ?> mapper) {
 
 		return IntegrationFlows
-			.from(
-				Kafka.messageDrivenChannelAdapter(consumerFactory, Topics.CalculationIn))
-			.log(Level.INFO, IntegrationConfiguration.class.getName(), "\"Received Kafka calculation request\"")
+			.from(Kafka
+				.messageDrivenChannelAdapter(consumerFactory, kafkaProperties.getTopicIn()))
+			.log(Level.DEBUG, getClass().getName(), m -> String.format("Received calculation request: %s", m))
 			.transform(Transformers.fromJson(mapper))
-			.handle(CalculationRequest.class, (request, headers) -> coreCalculator.calculate(request))
+			.handle(coreCalculator)
 			.transform(Transformers.toJson(mapper))
-			.handle(
-				Kafka.outboundChannelAdapter(kafkaTemplate)
-					.messageKey(MessageKeys.CalculationMessageKey)
-					.topic(Topics.CalculationOut))
+			.log(Level.DEBUG, getClass().getName(), m -> String.format("Returning calculation response: %s", m))
+			.handle(Kafka
+				.outboundChannelAdapter(kafkaTemplate)
+				.messageKey(kafkaProperties.getMessageKey())
+				.topic(kafkaProperties.getTopicOut()))
 			.get();
 	}
-	//@formatter:on
 
 }

@@ -2,11 +2,17 @@ spring:
   application:
     name: tariff-calculator-core
   kafka:
-    bootstrap-servers: ${KAFKA_HOST:172.18.0.2}:${KAFKA_PORT:9092}
+    bootstrap-servers: ${KAFKA_HOST:127.0.0.1}:${KAFKA_PORT:9092}
     consumer:
       group-id: tf-calculator
 
 logging:
   level:
-    org: INFO
+    root: WARN
     org.lab: DEBUG
+
+app:
+  kafka:
+    topic-in: calculationTopicRequest
+    topic-out: calculationTopicReplies
+    message-mey: calculationMessageKey
