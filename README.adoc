@@ -65,14 +65,21 @@ cual realizaremos las llamadas a partir del controlador `CalculatorController`:
 [source,java]
 ----
 @RestController
+@RequestMapping("/calculator")
 @Slf4j
 public class CalculatorController {
 
-    @Autowired
-    private CalculatorGateway gateway;
+	@Autowired
+	private CalculatorGateway gateway;
 
-    @PostMapping(Constants.Rest.CalculationRequestPath)
-    public CalculationResponse calculate(@RequestBody CalculationRequest request) { ... }
+	@PostMapping
+	public CalculationResponse calculate(@RequestBody CalculationRequest request) {
+		log.debug("Processing calculation request: {}", request);
+		CalculationResponse response = gateway.sendMessage(request);
+		log.debug("Received response: {}", response);
+		return response;
+	}
+
 }
 ----
 
@@ -84,40 +91,14 @@ En primer lugar nuestro canal de entrada enviará los mensajes que recibe a Kafk
 [source,java]
 ----
 @Bean
-IntegrationFlow inputChannelToKafkaFlow(
-    KafkaTemplate<String, String> kafkaTemplate,
-    JsonObjectMapper<?, ?> mapper) {
-
-  return IntegrationFlows
-    .from(MessageChannels.publishSubscribe(Channels.CalculationIn))
+IntegrationFlow outboundGateFlow(ReplyingKafkaTemplate<String, String, String> kafkaTemplate) {
+  return IntegrationFlows.from(CHANNEL_NAME_IN)
+    .log(Level.DEBUG, getClass().getName(), m -> String.format("Sending calculation request: %s", m))
     .transform(Transformers.toJson(mapper))
-    .handle(Kafka
-      .outboundChannelAdapter(kafkaTemplate)
-      .messageKey(MessageKeys.CalculationMessageKey)
-      .topic(Topics.CalculationIn))
-    .get();
-}
-----
-
-Y después definiremos nuestro flujo de recepción de mensajes de respuesta:
-
-[source,java]
-----
-@Bean
-IntegrationFlow kafkaToOutputChannelFlow(
-    ConsumerFactory<String, String> consumerFactory,
-    JsonObjectMapper<?, ?> mapper) {
-
-  return IntegrationFlows
-    .from(Kafka
-      .messageDrivenChannelAdapter(
-        consumerFactory,
-        KafkaMessageDrivenChannelAdapter.ListenerMode.record, Topics.CalculationOut)
-      .recoveryCallback(
-        new ErrorMessageSendingRecoverer(channelCalculatorError(),
-        new RawRecordHeaderErrorMessageStrategy())))
+    .handle(Kafka.outboundGateway(kafkaTemplate).topic(TOPIC_NAME_IN).messageKey("calculateMessageKey"))
+    .log(Level.DEBUG, getClass().getName(), m -> String.format("Received calculation response: %s", m))
     .transform(Transformers.fromJson(CalculationResponse.class, mapper))
-    .channel(Channels.CalculationOut)
+    .channel(CHANNEL_NAME_OUT)
     .get();
 }
 ----
@@ -132,22 +113,24 @@ Esto lo hacemos a través de la siguiente configuración:
 
 [source,java]
 ----
+@Bean
 IntegrationFlow flowFromKafkaDummy(
-    KafkaTemplate<String, String> kafkaTemplate,
-    ConsumerFactory<String, String> consumerFactory,
-    JsonObjectMapper<?, ?> mapper) {
+  KafkaTemplate<String, String> kafkaTemplate,
+  ConsumerFactory<String, String> consumerFactory,
+  JsonObjectMapper<?, ?> mapper) {
 
   return IntegrationFlows
-    .from(
-      Kafka.messageDrivenChannelAdapter(consumerFactory, Topics.CalculationIn))
+    .from(Kafka.messageDrivenChannelAdapter(consumerFactory, TOPIC_NAME_IN))
+    .log(Level.DEBUG, getClass().getName(), m -> String.format("Received calculation request: %s", m))
     .transform(Transformers.fromJson(mapper))
     .handle(CalculationRequest.class, (request, headers) -> coreCalculator.calculate(request))
     .transform(Transformers.toJson(mapper))
-    .handle(
-      Kafka.outboundChannelAdapter(kafkaTemplate)
-      .messageKey(MessageKeys.CalculationMessageKey)
-      .topic(Topics.CalculationOut))
+    .log(Level.DEBUG, getClass().getName(), m -> String.format("Returning calculation response: %s", m))
+    .handle(Kafka.outboundChannelAdapter(kafkaTemplate)
+      .messageKey(MESSAGE_KEY)
+      .topic(TOPIC_NAME_OUT))
     .get();
+}
 }
 ----
 
@@ -185,142 +168,6 @@ cd env
 export DOCKER_HOST_IP=127.0.0.1
 docker-compose up -d
 ----
-
-////
-https://github.com/spring-projects/spring-integration-kafka/
-
-Para este ejemplo utilizaremos la siguiente versión dockerizada de Kafka
-https://hub.docker.com/r/wurstmeister/kafka/[wurstmeister/kafka]. Esta basada en una versión
-_1.1.0_ de Kafka. Hay que tener en cuenta que para que funcione el ejemplo necesitamos una versión
-_0.11_ o superior por la versión de
-https://github.com/spring-projects/spring-integration-kafka[spring-integration-kafka] utilizada.
-
-En primer lugar adaptaremos nuestro _docker-compose.yml_ (dentro del repositorio está en la carpeta
-_env_) actualizando el _KAFKA_ADVERTISED_HOST_NAME_ la IP de nuestro bridge de docker (podemos
-consultarla ejecutando el comando `docker network inspect`):
-
-[source,yml]
-----
-version: '2'
-services:
-
-  zookeeper:
-    image: wurstmeister/zookeeper
-    container_name: "tf-zookeeper"
-    ports:
-      - "2181:2181"
-
-  kafka:
-    image: wurstmeister/kafka
-    container_name: "tf-kafka"
-    ports:
-      - "9092"
-    environment:
-      KAFKA_ADVERTISED_HOST_NAME: 172.17.0.1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CREATE_TOPICS: "tf-calculator-in:1:3,tf-calculator-out:1:1:compact"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-
-  mongodb:
-    image: mongo:latest
-    container_name: "tf-mongodb"
-    environment:
-      - MONGO_DATA_DIR=/data/db
-      - MONGO_LOG_DIR=/dev/null
-    #volumes:
-    #  - ./data/db:/data/db
-    ports:
-      - 27017:27017
-    command: mongod --smallfiles --logpath=/dev/null # --quiet
-
----- 
-
-Una vez actualizada levantaremos los contenedores a través del comando:
-
-----
-docker-compose up -d
-----
-
-Una vez estén levantados los contenedores de mongodb, zookeeper y kafka consultaremos la IP de Kafka
-para actualizar nuestra configuración:
-
-[source,bash]
-----
-lab@lab:~/repositories/labcabrera/sample-spring-integration-kafka$ docker network ls
-NETWORK ID          NAME                DRIVER              SCOPE
-047b473973a4        bridge              bridge              local
-2bf80c4e2616        env_default         bridge              local
-c52e5dc6a807        host                host                local
-89657ae6adc9        none                null                local
-lab@lab:~/repositories/labcabrera/sample-spring-integration-kafka$ docker network inspect env_default 
-[
-    {
-        "Name": "env_default",
-        "Id": "2bf80c4e2616b0958fc8885eaae34082c5b87119f88aedd257ef5a2b88b1e050",
-        "Created": "2018-05-23T12:18:04.801746254+01:00",
-        "Scope": "local",
-        "Driver": "bridge",
-        "EnableIPv6": false,
-        "IPAM": {
-            "Driver": "default",
-            "Options": null,
-            "Config": [
-                {
-                    "Subnet": "172.18.0.0/16",
-                    "Gateway": "172.18.0.1"
-                }
-            ]
-        },
-        "Internal": false,
-        "Attachable": false,
-        "Ingress": false,
-        "ConfigFrom": {
-            "Network": ""
-        },
-        "ConfigOnly": false,
-        "Containers": {
-            "28f92d58d984d74d74d380a0e3893d0fe418590fce09ef4f447832f2facd2d83": {
-                "Name": "tf-mongodb",
-                "EndpointID": "769e86f49265a1fdcaf404aa5c5276c3b708618961207c9f88dc2f921a35d6d3",
-                "MacAddress": "02:42:ac:12:00:02",
-                "IPv4Address": "172.18.0.2/16",
-                "IPv6Address": ""
-            },
-            "2b30d547f0cffc1d4d4923034f816d03f91cfea00501f3b7e909c4284fda57c6": {
-                "Name": "tf-kafka",
-                "EndpointID": "963c7aecd8bb5ccff8d5b8fd34372f72fa27aae150e58710fccb8d81200ac283",
-                "MacAddress": "02:42:ac:12:00:04",
-                "IPv4Address": "172.18.0.4/16",
-                "IPv6Address": ""
-            },
-            "8eb3f74bd3afbc13869de0bccc7e8b07597eaad8a0d168778ee46d395f340317": {
-                "Name": "tf-zookeeper",
-                "EndpointID": "ce1bb3233e85030cca19657bb210fe700fb325df4b89daf4dfdfe7f8b0edfa93",
-                "MacAddress": "02:42:ac:12:00:03",
-                "IPv4Address": "172.18.0.3/16",
-                "IPv6Address": ""
-            }
-        },
-        "Options": {},
-        "Labels": {}
-    }
-]
-
-----
-
-En este caso, el valor _172.18.0.4_ será el que estableceremos en nuestros ficheros de configuración
-tanto del proyecto _core_ como del _gateway_:
-
-[source,yml]
-----
-spring:
-  kafka:
-    bootstrap-servers: ${KAFKA_HOST:172.18.0.2}:${KAFKA_PORT:9092}
-    consumer:
-      group-id: tf-calculator
-----
-////
 
 == Probando el sistema en local
 
@@ -382,11 +229,6 @@ Aparte de la generación local de la imagen el plugin también nos ofrece otras 
 la de realizar el push o realizar tags.
 
 Esta imagen se puede obtener desde https://hub.docker.com/r/labcabrera/tariff-calculator-core/tags/.
-
-== OpenShift
-
-En este https://github.com/labcabrera/http-network-diagnostic[repositorio] se explica brevemente
-cómo desplegar una microservicio con Spring Boot en OpenShift.
 
 == Referencias
 
