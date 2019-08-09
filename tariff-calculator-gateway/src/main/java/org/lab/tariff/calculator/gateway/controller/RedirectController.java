@@ -1,4 +1,4 @@
-package org.lab.tariff.calculator.gateway.rest;
+package org.lab.tariff.calculator.gateway.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;

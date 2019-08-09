@@ -1,4 +1,4 @@
-package org.lab.tariff.calculator.gateway.rest;
+package org.lab.tariff.calculator.gateway.controller;
 
 import org.lab.tariff.calculator.gateway.gateway.CalculatorGateway;
 import org.lab.tariff.calculator.model.CalculationRequest;
