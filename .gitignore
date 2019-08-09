@@ -7,3 +7,5 @@
 **/bin
 **/build
 **/.gradle
+
+env/zk-single-kafka-single/*
