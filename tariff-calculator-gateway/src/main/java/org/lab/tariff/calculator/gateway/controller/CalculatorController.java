@@ -1,5 +1,7 @@
 package org.lab.tariff.calculator.gateway.controller;
 
+import java.time.LocalDate;
+
 import org.lab.tariff.calculator.gateway.gateway.CalculatorGateway;
 import org.lab.tariff.calculator.model.CalculationRequest;
 import org.lab.tariff.calculator.model.CalculationResponse;
@@ -22,9 +24,22 @@ public class CalculatorController {
 	@PostMapping
 	public CalculationResponse calculate(@RequestBody CalculationRequest request) {
 		log.debug("Processing calculation request: {}", request);
+		if (request.getCalculationRequestDate() == null) {
+			request.setCalculationRequestDate(LocalDate.now());
+		}
 		CalculationResponse response = gateway.sendMessage(request);
 		log.debug("Received response: {}", response);
 		return response;
+	}
+
+	@PostMapping("/async")
+	public String calculateAsync(@RequestBody CalculationRequest request) {
+		if (request.getCalculationRequestDate() == null) {
+			request.setCalculationRequestDate(LocalDate.now());
+		}
+		log.debug("Processing calculation request: {}", request);
+		gateway.sendMessageAsync(request);
+		return "Success";
 	}
 
 }

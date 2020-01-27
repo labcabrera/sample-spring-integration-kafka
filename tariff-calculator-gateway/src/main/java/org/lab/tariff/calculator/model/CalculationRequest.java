@@ -1,13 +1,13 @@
 package org.lab.tariff.calculator.model;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import lombok.Data;
 
 @Data
 public class CalculationRequest {
 
-	private Date calculationRequestDate;
+	private LocalDate calculationRequestDate;
 
 	private CustomerRequestInfo customer;
 

@@ -12,7 +12,11 @@ public class KafkaProperties {
 
 	private String topicIn;
 
+	private String topicInAsync;
+
 	private String topicOut;
+
+	private String topicOutAsync;
 
 	private String messageKey;
 
