@@ -36,6 +36,12 @@ public class CoreCalculator implements GenericHandler<CalculationRequest> {
 		CalculationHistory history = saveHistory(request, response);
 		response.setReference(history.getId());
 
+		try {
+			Thread.sleep(5000);
+		}
+		catch (Exception ignore) {
+		}
+
 		return response;
 	}
 

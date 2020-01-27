@@ -14,5 +14,6 @@ logging:
 app:
   kafka:
     topic-in: calculationTopicRequest
+    topic-in-async: calculationTopicAsyncRequest
     topic-out: calculationTopicReplies
     message-mey: calculationMessageKey
