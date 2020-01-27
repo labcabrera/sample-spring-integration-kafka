@@ -5,7 +5,6 @@ import org.lab.tariff.calculator.model.CalculationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.Transformers;
@@ -19,8 +18,7 @@ import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 
 @Configuration
-@EnableIntegration
-public class IntegrationConfiguration {
+public class OutboundKafkaSyncConfig {
 
 	public static final String CHANNEL_NAME_IN = "channelCalculationIn";
 	public static final String CHANNEL_NAME_OUT = "channelCalculationOut";
