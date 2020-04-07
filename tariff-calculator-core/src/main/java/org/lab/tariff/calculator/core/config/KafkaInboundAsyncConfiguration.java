@@ -14,6 +14,7 @@ import org.springframework.integration.kafka.dsl.Kafka;
 import org.springframework.integration.support.json.JsonObjectMapper;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.ConsumerProperties;
 
 @Configuration
 @EnableIntegration
@@ -30,9 +31,10 @@ public class KafkaInboundAsyncConfiguration {
 
 	@Bean
 	IntegrationFlow flowAsyncFlow(KafkaTemplate<String, String> kafkaTemplate, ConsumerFactory<String, String> consumerFactory) {
+		ConsumerProperties consumerProperties = new ConsumerProperties(kafkaProperties.getTopicInAsync());
+		consumerProperties.setGroupId("xxy");
 		return IntegrationFlows
-			//.from(Kafka.inboundChannelAdapter(consumerFactory, kafkaProperties.getTopicInAsync()))
-			.from(Kafka.inboundChannelAdapter(consumerFactory, kafkaProperties.getTopicInAsync()).groupId("xxy"),
+			.from(Kafka.inboundChannelAdapter(consumerFactory, consumerProperties),
 				e -> e.poller(Pollers.fixedDelay(1000)))
 			.log(Level.DEBUG, KafkaInboundAsyncConfiguration.class.getName(),
 				m -> String.format("Received calculation async request: %s", m))

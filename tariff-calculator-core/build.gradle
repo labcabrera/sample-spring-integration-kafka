@@ -1,13 +1,13 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot'      version '2.1.6.RELEASE'
+	id 'org.springframework.boot'      version '2.2.6.RELEASE'
 	id 'com.palantir.docker'           version '0.20.1'
 	id 'com.palantir.jacoco-coverage'  version '0.4.0'
 	id 'org.sonarqube'                 version '2.6.2'
 }
 
 ext {
-	set('springIntegrationVersion',    '3.1.4.RELEASE')
+	set('springIntegrationVersion',    '3.2.1.RELEASE')
 }
 
 repositories {
@@ -23,6 +23,8 @@ sourceCompatibility = 1.8
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+	implementation 'org.springframework.boot:spring-boot-starter-integration'
+  	//implementation 'org.springframework.kafka:spring-kafka'
 	implementation "org.springframework.integration:spring-integration-kafka:${springIntegrationVersion}"
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 

@@ -38,6 +38,7 @@ public class CoreApplication implements CommandLineRunner {
 			sources.put("web", "100.10");
 			sources.put("direct", "500.00");
 			sources.put("test", "42.11");
+			sources.put("slow", "123.45");
 			sources.entrySet().forEach(x -> sourceRepository.insert(CalculationSourceData.builder()
 				.sourceName(x.getKey())
 				.baseAmount(new BigDecimal(x.getValue()))

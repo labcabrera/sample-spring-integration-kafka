@@ -32,22 +32,21 @@ public class CoreCalculator implements GenericHandler<CalculationRequest> {
 	public CalculationResponse handle(CalculationRequest request, MessageHeaders headers) {
 		log.info("Performing internal calculation: {}", request);
 		CalculationResponse response = calculateResponse(request);
-
 		CalculationHistory history = saveHistory(request, response);
 		response.setReference(history.getId());
-
-		try {
-			Thread.sleep(5000);
+		// Simulate slow processing
+		if ("slow".equals(request.getSource())) {
+			try {
+				Thread.sleep(5000);
+			} catch (Exception ignore) {
+			}
 		}
-		catch (Exception ignore) {
-		}
-
 		return response;
 	}
 
 	private CalculationResponse calculateResponse(CalculationRequest request) {
 		CalculationSourceData source = sourceRepository.findBySourceName(request.getSource());
-		Assert.notNull(source, "Missing source " + request.getSource() + " in mongodb");
+		Assert.notNull(source, String.format("Missing source %s in mongodb", request.getSource()));
 		Integer rand = new Random().nextInt(50);
 		BigDecimal amount = source.getBaseAmount().add(new BigDecimal(rand));
 
