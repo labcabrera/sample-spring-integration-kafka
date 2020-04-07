@@ -45,7 +45,7 @@ public class OutboundKafkaAsyncConfig {
 				.getHeaders()
 				.get(IntegrationMessageHeaderAccessor.SEQUENCE_NUMBER))
 			.headerMapper(kafkaHeaderMapper)
-			.topicExpression("headers[kafka_topic] ?: '" + topic + "'")
+			.topicExpression(String.format("headers[kafka_topic] ?: '%s'", topic))
 			.configureKafkaTemplate(t -> t.id("kafkaTemplate:" + topic));
 	}
 

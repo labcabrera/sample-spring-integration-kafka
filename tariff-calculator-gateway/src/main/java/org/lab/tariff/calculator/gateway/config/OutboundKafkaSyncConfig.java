@@ -31,25 +31,29 @@ public class OutboundKafkaSyncConfig {
 
 	@Bean
 	NewTopic calculationTopicRequest() {
-		return new NewTopic(kafkaProperties.getTopicIn(), kafkaProperties.getTopicPartitions(), kafkaProperties.getReplicationFactor());
+		return new NewTopic(kafkaProperties.getTopicIn(),
+			kafkaProperties.getTopicPartitions(),
+			kafkaProperties.getReplicationFactor());
 	}
 
 	@Bean
 	NewTopic calculationTopicReplies() {
-		return new NewTopic(kafkaProperties.getTopicOut(), kafkaProperties.getTopicPartitions(), kafkaProperties.getReplicationFactor());
+		return new NewTopic(kafkaProperties.getTopicOut(),
+			kafkaProperties.getTopicPartitions(),
+			kafkaProperties.getReplicationFactor());
 	}
 
 	@Bean
 	IntegrationFlow outboundGateFlow(ReplyingKafkaTemplate<String, String, String> kafkaTemplate) {
 		return IntegrationFlows
 			.from(CHANNEL_NAME_IN)
-			.log(Level.DEBUG, getClass().getName(), m -> String.format("Sending calculation request: %s", m))
+			.log(Level.DEBUG, OutboundKafkaSyncConfig.class.getName(), m -> String.format("Sending calculation request: %s", m))
 			.transform(Transformers.toJson(mapper))
 			.handle(Kafka
 				.outboundGateway(kafkaTemplate)
 				.topic(kafkaProperties.getTopicIn())
 				.messageKey(kafkaProperties.getMessageKey()))
-			.log(Level.DEBUG, getClass().getName(), m -> String.format("Received calculation response: %s", m))
+			.log(Level.DEBUG, OutboundKafkaSyncConfig.class.getName(), m -> String.format("Received calculation response: %s", m))
 			.transform(Transformers.fromJson(CalculationResponse.class, mapper))
 			.channel(CHANNEL_NAME_OUT)
 			.get();
